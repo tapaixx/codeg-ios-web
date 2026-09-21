@@ -12,6 +12,16 @@ the text as the git tag message and the GitHub Release notes.
 
 ### Changed
 
+- A running turn is picked up within a round-trip: the app now listens to the
+  server's global `conversation://changed` side-channel over a WebSocket
+  (`ServerEventHub`) and attaches as soon as a session flips to running; the
+  25-second poll stays as the safety net.
+- The continued-processing task now reports real (wall-clock) progress every
+  20 seconds. It reported none before, which is grounds for the system to
+  expire it — the likely reason the Dynamic Island kept dropping mid-turn.
+- A running turn's event socket retries for up to ten minutes (backoff capped
+  at 15s) instead of giving up after about thirty seconds.
+- The Dynamic Island is titled after the conversation.
 - The page's floating selection toolbar (copy / quote / ask) is hidden on
   touch; it sat on top of iOS's own selection callout and the two fought over
   the selection. Touch keeps the system callout; mouse and trackpad keep the

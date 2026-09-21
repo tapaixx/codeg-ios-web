@@ -60,6 +60,20 @@ struct RootView: View {
             guard scenePhase == .active else { return }
             await model.activity.autoRefresh(client: model.selectedClient())
         }
+        // The server's global side-channel: a session flipping to running is
+        // known within a round-trip instead of at the next poll. Keyed on the
+        // server only (not the scene phase) so it keeps listening while the
+        // process is alive in the background under a continued-processing
+        // task; a suspended socket simply reconnects on resume.
+        .task(id: hubID) {
+            guard let client = model.selectedClient() else { return }
+            let hub = ServerEventHub(baseURL: client.baseURL, token: client.token)
+            hub.start()
+            defer { hub.close() }
+            for await change in hub.changes {
+                watcher.apply(change)
+            }
+        }
         .onChange(of: model.activity.running.map(\.id), initial: true) { _, _ in
             watcher.sync(
                 running: model.activity.running,
@@ -70,6 +84,10 @@ struct RootView: View {
         .sheet(isPresented: $model.serversSheetPresented) {
             ManageServersSheet(store: model.serverStore, selectedServerID: $model.selectedServerID)
         }
+    }
+
+    private var hubID: String {
+        "\(model.selectedServerID?.uuidString ?? "none")|\(model.selectedServer?.urlString ?? "")"
     }
 
     /// Identity for the activity poller's `.task` — composes everything that

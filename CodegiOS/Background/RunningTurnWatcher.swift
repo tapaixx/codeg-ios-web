@@ -31,6 +31,10 @@ final class RunningTurnWatcher {
 
     private var watches: [Int: Watch] = [:]
     private var serverID: UUID?
+    /// The server the last `sync` was for, so a hub change can start a watch
+    /// on its own without waiting for the next poll.
+    private var server: ServerProfile?
+    private var client: CodegClient?
 
     /// Never more live sockets than this; the rest wait for a slot.
     private static let maxConcurrent = 4
@@ -42,6 +46,8 @@ final class RunningTurnWatcher {
             cancelAll()
             serverID = server?.id
         }
+        self.server = server
+        self.client = client
         guard let server, let client else {
             cancelAll()
             return
@@ -61,6 +67,41 @@ final class RunningTurnWatcher {
             start(conversation, server: server, client: client)
             open += 1
         }
+    }
+
+    /// A change from the server's global side-channel (``ServerEventHub``):
+    /// a session flipping to running starts its watch now; one leaving that
+    /// state, or deleted, stops it. The poll still reconciles behind this.
+    func apply(_ change: ServerEventHub.Change) {
+        guard let server, let client else { return }
+        switch change {
+        case .upsert(let summary):
+            if summary.status.isLive {
+                startIfNeeded(summary, server: server, client: client)
+            } else {
+                stop(summary.id)
+            }
+        case .status(let id, let status):
+            guard status.isLive else { stop(id); return }
+            guard watches[id] == nil else { return }
+            // The status frame carries only the id; the attach needs the agent
+            // type (and the external id helps), so fetch the summary once.
+            Task { [weak self] in
+                guard let self,
+                      let summary = try? await client.conversationDetail(id: id).summary,
+                      self.server?.id == server.id else { return }
+                self.startIfNeeded(summary, server: server, client: client)
+            }
+        case .deleted(let id):
+            stop(id)
+        }
+    }
+
+    private func startIfNeeded(_ conversation: ConversationSummary, server: ServerProfile, client: CodegClient) {
+        guard watches[conversation.id] == nil else { return }
+        let open = watches.values.filter { !$0.finished }.count
+        guard open < Self.maxConcurrent else { return }
+        start(conversation, server: server, client: client)
     }
 
     private func start(_ conversation: ConversationSummary, server: ServerProfile, client: CodegClient) {

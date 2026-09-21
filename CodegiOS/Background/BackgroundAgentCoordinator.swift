@@ -239,10 +239,13 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             return
         }
         continuedTask = task
-        // Agent turns have no honest completion percentage. Foundation represents
-        // 0/0 as indeterminate progress; the useful user signal is elapsed time
-        // plus the current phase in the title/subtitle, not a fake progress bar.
-        task.progress.totalUnitCount = 0
+        // Agent turns have no honest completion percentage — but a continued
+        // processing task that reports no progress is expired by the system
+        // ("Tasks that do not report any progress will be expired"), and an
+        // indeterminate 0/0 counts as none. So the bar is wall-clock time
+        // against a two-hour window, advanced by the heartbeat below: slow,
+        // never full, but always moving, which is what keeps the task alive.
+        task.progress.totalUnitCount = Self.progressWindowSeconds
         task.progress.completedUnitCount = 0
         lock.unlock()
 
@@ -269,17 +272,26 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         updateSystemTaskTitle()
     }
 
+    /// Progress denominator: two hours of wall-clock time, in seconds.
+    private static let progressWindowSeconds: Int64 = 2 * 60 * 60
+    private static let progressHeartbeat: TimeInterval = 20
+
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
-        // Elapsed time is intentionally minute-granularity. Updating every token or
-        // every second keeps the Dynamic Island visually expanded for no benefit.
-        timer.schedule(deadline: .now() + 60, repeating: 60)
+        // The progress tick is what keeps the system from expiring the task, so
+        // it runs every 20s. The title/subtitle only change at minute
+        // granularity (`updateSystemTaskTitle` de-duplicates), so the Dynamic
+        // Island is not re-expanded by the tick itself.
+        let startedAt = Date()
+        timer.schedule(deadline: .now() + Self.progressHeartbeat, repeating: Self.progressHeartbeat)
         timer.setEventHandler { [weak self, weak task] in
-            guard let self, task != nil else { return }
+            guard let self, let task else { return }
             self.lock.lock()
             let valid = self.continuedTaskIdentifier == identifier && !self.activeTurns.isEmpty
             self.lock.unlock()
             guard valid else { return }
+            let elapsed = Int64(Date().timeIntervalSince(startedAt))
+            task.progress.completedUnitCount = min(elapsed, Self.progressWindowSeconds - 1)
             self.updateSystemTaskTitle()
         }
         lock.lock()

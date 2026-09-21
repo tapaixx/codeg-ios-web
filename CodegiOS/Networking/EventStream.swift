@@ -119,7 +119,11 @@ final class EventStream: @unchecked Sendable {
     /// Internal, invisible socket recovery. A healthy frame resets the budget.
     private var reconnectAttempt = 0
     private var reconnectWorkItem: DispatchWorkItem?
-    private static let maxTransparentReconnects = 6
+    /// Six attempts at ≤8s each gave up after about half a minute — less than
+    /// a Wi-Fi ↔ cellular handoff or a locked phone's radio nap, which is how
+    /// a running turn's island kept vanishing mid-turn. Backoff now caps at
+    /// 15s and only a solid ten minutes of failure ends the stream.
+    private static let maxTransparentReconnects = 40
 
     /// Deliberately nil during the initial WebSocket handshake. These are only
     /// created after `.ready` and `attach(...)` so system background machinery can
@@ -291,8 +295,8 @@ final class EventStream: @unchecked Sendable {
             return
         }
 
-        let shift = min(reconnectAttempt - 1, 4)
-        delay = min(8, 0.5 * pow(2, Double(shift)))
+        let shift = min(reconnectAttempt - 1, 5)
+        delay = min(15, 0.5 * pow(2, Double(shift)))
         socketGeneration &+= 1
         task?.cancel(with: .goingAway, reason: nil)
         task = nil

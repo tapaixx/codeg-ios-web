@@ -255,10 +255,12 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         // Agent turns have no honest completion percentage — but a continued
         // processing task that reports no progress is expired by the system
         // ("Tasks that do not report any progress will be expired"), and an
-        // indeterminate 0/0 counts as none. So the bar is wall-clock time
-        // against a two-hour window, advanced by the heartbeat below: slow,
-        // never full, but always moving, which is what keeps the task alive.
-        task.progress.totalUnitCount = Self.progressWindowSeconds
+        // indeterminate 0/0 counts as none. The ring is the system's and cannot
+        // show text, so it is made into the one thing that IS honest about a
+        // turn: a clock. One lap of the ring is one hour of wall-clock time,
+        // advanced by the heartbeat below; it wraps and starts the next lap.
+        // The exact figure stays in the subtitle ("· Elapsed 4 min").
+        task.progress.totalUnitCount = Self.progressLapSeconds
         task.progress.completedUnitCount = 0
         lock.unlock()
 
@@ -285,8 +287,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         updateSystemTaskTitle()
     }
 
-    /// Progress denominator: two hours of wall-clock time, in seconds.
-    private static let progressWindowSeconds: Int64 = 2 * 60 * 60
+    /// One lap of the progress ring, in seconds of wall-clock time.
+    private static let progressLapSeconds: Int64 = 60 * 60
     private static let progressHeartbeat: TimeInterval = 20
 
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
@@ -304,7 +306,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             self.lock.unlock()
             guard valid else { return }
             let elapsed = Int64(Date().timeIntervalSince(startedAt))
-            task.progress.completedUnitCount = min(elapsed, Self.progressWindowSeconds - 1)
+            task.progress.completedUnitCount = elapsed % Self.progressLapSeconds
             self.updateSystemTaskTitle()
         }
         lock.lock()

@@ -45,7 +45,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.codeg.ios.web
-        PRODUCT_NAME: Codeg
+        PRODUCT_NAME: CodegWeb
         MARKETING_VERSION: "0.0.1"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: "NO"

@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
 
       # A self-hosted runner keeps its workspace between runs, so a previous
-      # run's Codeg.app would still be sitting in build/ — and the packaging
+      # run's CodegWeb.app would still be sitting in build/ — and the packaging
       # step below only checks that the app EXISTS. Start from nothing so a
       # green run can only ever mean this commit compiled.
       - name: Clean previous build
@@ -85,17 +85,17 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          APP="build/DerivedData/Build/Products/Release-iphoneos/Codeg.app"
+          APP="build/DerivedData/Build/Products/Release-iphoneos/CodegWeb.app"
           test -d "$APP"
           test ! -d "$APP/_CodeSignature"
 
           VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")
           BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")
-          BASENAME="Codeg-${VERSION}-${BUILD}-unsigned"
+          BASENAME="CodegWeb-${VERSION}-unsigned"
 
           rm -rf build/ipa
           mkdir -p build/ipa/Payload
-          ditto "$APP" "build/ipa/Payload/Codeg.app"
+          ditto "$APP" "build/ipa/Payload/CodegWeb.app"
           (
             cd build/ipa
             zip -qry "${BASENAME}.ipa" Payload

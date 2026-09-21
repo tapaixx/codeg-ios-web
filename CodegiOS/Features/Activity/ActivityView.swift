@@ -104,7 +104,7 @@ struct ActivityView: View {
 
             if let refreshed = activity.lastRefreshed {
                 Text("Updated \(RelativeTime.string(from: refreshed))")
-                    .font(.caption2)
+                    .font(WebTheme.sans(11))
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity)
                     .plainRow(EdgeInsets(top: 8, leading: 16, bottom: 16, trailing: 16))
@@ -146,7 +146,7 @@ struct ActivityView: View {
         HStack(spacing: 11) {
             SectionBadgeIcon(systemImage: icon, tint: tint)
             Text(title)
-                .font(.headline)
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(Theme.textPrimary)
             Spacer(minLength: 8)
             CountBadge(count: count)

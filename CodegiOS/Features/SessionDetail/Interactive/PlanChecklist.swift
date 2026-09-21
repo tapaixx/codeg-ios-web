@@ -57,14 +57,14 @@ private struct PlanChecklistRow: View {
                 .frame(width: 16, height: 16)
                 .padding(.top, 1.5)
             Text(item.content)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(item.status == .completed ? Theme.textTertiary : Theme.textPrimary)
                 .strikethrough(item.status == .completed, color: Theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             if item.priority == .high {
                 Text("High")
-                    .font(.caption2.weight(.semibold))
+                    .font(WebTheme.sans(11, .semibold))
                     .foregroundStyle(Theme.danger)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -87,8 +87,7 @@ struct PlanStatusIcon: View {
     var body: some View {
         switch status {
         case .completed:
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 13))
+            LucideIcon(sf: "checkmark.circle.fill", size: 13)
                 .foregroundStyle(DiffPalette.addText)
         case .inProgress:
             if isStreaming {
@@ -96,13 +95,11 @@ struct PlanStatusIcon: View {
                     .controlSize(.mini)
                     .tint(Theme.accent)
             } else {
-                Image(systemName: "circle.inset.filled")
-                    .font(.system(size: 13))
+                LucideIcon(sf: "circle.inset.filled", size: 13)
                     .foregroundStyle(Theme.accent)
             }
         case .pending:
-            Image(systemName: "circle")
-                .font(.system(size: 13))
+            LucideIcon(sf: "circle", size: 13)
                 .foregroundStyle(Theme.textTertiary)
         }
     }

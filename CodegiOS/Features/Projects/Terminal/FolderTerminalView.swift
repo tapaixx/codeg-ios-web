@@ -39,7 +39,7 @@ struct FolderTerminalView: View {
             .tint(Theme.accent)
             .accessibilityLabel("Terminal Actions")
         }
-        .font(.body)
+        .font(WebTheme.sans(14))
         .padding(.horizontal, Theme.Layout.screenHMargin)
         .padding(.vertical, 8)
     }
@@ -52,25 +52,25 @@ struct FolderTerminalView: View {
                 ProgressView().controlSize(.mini)
                 Text("Starting terminal…").foregroundStyle(Theme.textSecondary)
             }
-            .font(.caption)
+            .font(WebTheme.sans(12))
         case .running:
             HStack(spacing: 6) {
                 Circle().fill(Theme.accent).frame(width: 7, height: 7)
                 Text("Terminal").foregroundStyle(Theme.textSecondary)
             }
-            .font(.caption)
+            .font(WebTheme.sans(12))
         case .exited:
             HStack(spacing: 6) {
                 Circle().fill(Theme.textTertiary).frame(width: 7, height: 7)
                 Text("Exited").foregroundStyle(Theme.textTertiary)
             }
-            .font(.caption)
+            .font(WebTheme.sans(12))
         case .failed:
             HStack(spacing: 6) {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
                 Text("Failed").foregroundStyle(Theme.warning)
             }
-            .font(.caption)
+            .font(WebTheme.sans(12))
         }
     }
 
@@ -115,7 +115,7 @@ struct FolderTerminalView: View {
                         .foregroundStyle(Theme.warning)
                 }
                 Text(message)
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(3)
                 Spacer(minLength: 8)

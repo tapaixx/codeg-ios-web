@@ -1,42 +1,48 @@
 import SwiftUI
 
 /// Shared metrics for grouped Settings rows so the inset divider lines up under
-/// the title (past the leading icon badge), iOS-style.
+/// the title, past the leading icon.
+///
+/// The leading glyph is now a bare 16pt Lucide icon rather than a 29pt
+/// accent-filled rounded square: the web's settings rows put a
+/// `size-4 text-muted-foreground` icon next to the label and nothing else. That
+/// one change is most of why the ported Settings screens stop reading as iOS
+/// grouped lists.
 enum SettingsRowMetrics {
-    static let badgeSize: CGFloat = 29
-    static let iconGap: CGFloat = 12
+    /// Leading glyph box (`size-4`). Named `badgeSize` still — the call sites
+    /// that lay out around it don't care that it stopped being a badge.
+    static let badgeSize: CGFloat = WebTheme.Size.icon
+    static let iconGap: CGFloat = 10
     static let hInset: CGFloat = 16
-    static let vInset: CGFloat = 10
+    static let vInset: CGFloat = 11
     /// Leading inset for the inter-row divider: aligns with the title text.
     static var dividerInset: CGFloat { hInset + badgeSize + iconGap }
 }
 
-/// An iOS-Settings-style icon: a legible glyph centered on a rounded-square fill.
-/// The fill is the single app accent by default so every badge tracks the theme
-/// palette live; the glyph uses `Theme.onAccent` so it stays readable on any
-/// accent. Pass `tint` to override the fill per row.
+/// The leading icon on a Settings row: a plain Lucide glyph in
+/// `--muted-foreground`.
+///
+/// `tint` is kept in the signature (a few rows color their icon to signal
+/// destructive or status meaning) but now defaults to muted rather than to the
+/// accent, because the web tints these icons only for meaning.
 struct SettingsIconBadge: View {
     let icon: String
-    var tint: Color = Theme.accent
+    var tint: Color = WebTheme.mutedForeground
 
     var body: some View {
-        Image(systemName: icon)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(Theme.onAccent)
+        LucideIcon(sf: icon, size: WebTheme.Size.icon)
+            .foregroundStyle(tint)
             .frame(width: SettingsRowMetrics.badgeSize, height: SettingsRowMetrics.badgeSize)
-            .background(tint, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
 }
 
-/// The shared visual for one row inside a grouped Settings section: a tinted icon
-/// badge, a title, an optional trailing detail value, and a chevron. It draws no
-/// surface of its own — the enclosing `EditorSection` glass card provides the
-/// background and rows are separated by `SettingsRowDivider`. The whole row is
-/// hit-testable via `.contentShape`, so a tap anywhere (including the blank gap)
-/// registers, not just on the glyph or text.
+/// One row inside a grouped Settings section: leading icon, title, optional
+/// trailing detail, chevron. Draws no surface of its own — the enclosing
+/// ``EditorSection`` provides it and rows are separated by
+/// ``SettingsRowDivider``. The whole row is hit-testable.
 struct SettingsGroupedRowLabel: View {
     let icon: String
-    var tint: Color = Theme.accent
+    var tint: Color = WebTheme.mutedForeground
     let title: LocalizedStringKey
     var detail: LocalizedStringKey? = nil
 
@@ -44,17 +50,17 @@ struct SettingsGroupedRowLabel: View {
         HStack(spacing: SettingsRowMetrics.iconGap) {
             SettingsIconBadge(icon: icon, tint: tint)
             Text(title)
-                .foregroundStyle(Theme.textPrimary)
-            Spacer(minLength: 8)
+                .webText(.sm)
+                .foregroundStyle(WebTheme.foreground)
+            Spacer(minLength: WebTheme.Space.two)
             if let detail {
                 Text(detail)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.textSecondary)
+                    .webText(.sm)
+                    .foregroundStyle(WebTheme.mutedForeground)
                     .lineLimit(1)
             }
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.textTertiary)
+            LucideIcon(.chevronRight, size: 14)
+                .foregroundStyle(WebTheme.mutedForeground)
         }
         .padding(.horizontal, SettingsRowMetrics.hInset)
         .padding(.vertical, SettingsRowMetrics.vInset)
@@ -63,14 +69,11 @@ struct SettingsGroupedRowLabel: View {
     }
 }
 
-/// A whole-row `NavigationLink` to a leaf Settings screen, rendered as a grouped
-/// section row (icon badge + title + optional detail + chevron). Value-based
-/// (`NavigationLink(value:)`), so the same row serves taps and programmatic /
-/// deep-link navigation. Generic over the pushed value to keep this layer free
-/// of any Feature type.
+/// A whole-row `NavigationLink` to a leaf Settings screen. Value-based, so the
+/// same row serves taps and programmatic / deep-link navigation.
 struct SettingsGroupedNavRow<Value: Hashable>: View {
     let icon: String
-    var tint: Color = Theme.accent
+    var tint: Color = WebTheme.mutedForeground
     let title: LocalizedStringKey
     var detail: LocalizedStringKey? = nil
     let value: Value
@@ -83,82 +86,70 @@ struct SettingsGroupedNavRow<Value: Hashable>: View {
     }
 }
 
-/// Inset hairline between grouped rows — starts under the title, not at the card
-/// edge, mirroring the iOS grouped-list separator. A thin alias over the generic
-/// ``InsetDivider`` at the Settings row's title inset.
+/// Inset hairline between grouped rows. A thin alias over ``InsetDivider`` at
+/// the Settings row's title inset.
 struct SettingsRowDivider: View {
     var body: some View {
         InsetDivider(leading: SettingsRowMetrics.dividerInset)
     }
 }
 
-/// A grouped-list "radio" option row: a leading SF Symbol, a title, and a
-/// trailing checkmark when selected; the whole row is tappable. Shared by the
-/// Appearance (theme) and Language pickers, which present a single-choice list
-/// of an enum's cases. Lives inside an ``EditorSection`` with ``InsetDivider``s
-/// between rows.
+/// A grouped-list single-choice row: leading glyph, title, and a trailing check
+/// when selected. Shared by the Appearance (theme mode) and Language pickers.
 struct SelectableRow: View {
     let symbol: String
     let title: LocalizedStringKey
     let isSelected: Bool
-    /// Accent tint for the leading glyph and selected checkmark. Defaults to the
-    /// global `Theme.accent` token; callers that render where the bridged accent
-    /// trait can't reach — the Appearance page, which also shows inside the iPad
-    /// Settings sheet — pass an explicitly resolved color so the row recolors there.
-    var tint: Color = Theme.accent
+    /// Tint for the leading glyph and the check. Defaults to the theme's
+    /// `--primary`; callers rendering outside the theme trait's reach (the
+    /// Appearance page inside the iPad Settings sheet) pass a resolved color.
+    var tint: Color = WebTheme.primary
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: 26)
+            HStack(spacing: SettingsRowMetrics.iconGap) {
+                LucideIcon(sf: symbol, size: WebTheme.Size.icon)
+                    .foregroundStyle(isSelected ? tint : WebTheme.mutedForeground)
+                    .frame(width: SettingsRowMetrics.badgeSize)
                 Text(title)
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer(minLength: 8)
+                    .webText(.sm)
+                    .foregroundStyle(WebTheme.foreground)
+                Spacer(minLength: WebTheme.Space.two)
                 if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.subheadline.weight(.bold))
+                    LucideIcon(.check, size: WebTheme.Size.icon)
                         .foregroundStyle(tint)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, SettingsRowMetrics.hInset)
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableRowStyle())
     }
 }
 
 // MARK: - Generic grouped-list building blocks
 
-/// A hairline separator for grouped lists whose leading inset can start under the
-/// row's title (past a leading badge/tile), iOS grouped-list style. The generic
-/// primitive behind ``SettingsRowDivider`` and the Folders feature's grouped rows
-/// — pass the row's `(hInset + leadingGlyphWidth + gap)` so the line aligns under
-/// the title text. `leading: 0` draws edge-to-edge.
+/// A 1px `--border` separator whose leading inset can start under the row's
+/// title (past a leading glyph). `leading: 0` draws edge-to-edge.
+///
+/// A plain rule now, not a `Divider` with an overlay: the web's separator is one
+/// flat `bg-border` line at every density, and `Divider`'s built-in insets and
+/// hairline thickness fought that.
 struct InsetDivider: View {
     var leading: CGFloat = 0
 
     var body: some View {
-        Divider()
-            .overlay(Theme.hairline)
+        WebSeparator()
             .padding(.leading, leading)
     }
 }
 
-/// A content-agnostic borderless row for grouped lists (inside an `EditorSection`
-/// / `GlassCard(padding: 0)` surface, or `List` rows over `CodegBackground`). It
-/// draws no surface of its own — the enclosing card provides the background and
-/// ``InsetDivider``s separate rows. The whole row is hit-testable via
-/// `.contentShape(Rectangle())`, so a tap anywhere (including the blank gaps)
-/// registers, not just on the glyph or text (the dead-zone fix mirrored from
-/// ``SettingsGroupedRowLabel``). Callers supply only the inner content (typically
-/// an `HStack`); use the matching ``InsetDivider`` leading inset to align the
-/// separators under the content's title.
+/// A content-agnostic borderless row for grouped lists. Draws no surface of its
+/// own; the enclosing card provides the background and ``InsetDivider``s
+/// separate rows. The whole row is hit-testable.
 struct GroupedRow<Content: View>: View {
     var hInset: CGFloat = SettingsRowMetrics.hInset
     var vInset: CGFloat = 11

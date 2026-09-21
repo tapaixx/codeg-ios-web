@@ -145,8 +145,8 @@ struct KimiConfigSection: View {
                     if fetchingModels { ProgressView().controlSize(.small) }
                     else { Label("Fetch", systemImage: "arrow.clockwise").labelStyle(.titleAndIcon) }
                 }
-                .font(.subheadline.weight(.medium))
-                .buttonStyle(.glass).tint(Theme.accent)
+                .font(WebTheme.sans(14, .medium))
+                .buttonStyle(.web(.outline)).tint(Theme.accent)
                 .disabled(saving || fetchingModels)
             }
         }
@@ -165,10 +165,9 @@ struct KimiConfigSection: View {
                 Button(m) { modelId = m }
             }
         } label: {
-            Image(systemName: "list.bullet")
-                .font(.body.weight(.medium)).frame(width: 34, height: 30)
+            LucideIcon(sf: "list.bullet", size: 14)
         }
-        .buttonStyle(.glass).tint(Theme.textSecondary)
+        .buttonStyle(.web(.outline)).tint(Theme.textSecondary)
         .accessibilityLabel("Choose a fetched model")
     }
 
@@ -214,7 +213,7 @@ struct KimiConfigSection: View {
         return HStack(alignment: .top, spacing: 8) {
             Image(systemName: present ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                 .foregroundStyle(present ? Theme.accent : Theme.warning)
-            Text(text).font(.caption).foregroundStyle(Theme.textSecondary)
+            Text(text).font(WebTheme.sans(12)).foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -225,7 +224,7 @@ struct KimiConfigSection: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill")
                 .foregroundStyle(b.isError ? Theme.danger : Theme.accent)
-            Text(LocalizedStringKey(stringLiteral: b.text)).font(.caption)
+            Text(LocalizedStringKey(stringLiteral: b.text)).font(WebTheme.sans(12))
                 .foregroundStyle(b.isError ? Theme.danger : Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -246,9 +245,9 @@ struct KimiConfigSection: View {
         HStack {
             Spacer(minLength: 0)
             if prominent {
-                saveButton(title, action).buttonStyle(.glassProminent).tint(Theme.accent).disabled(saving)
+                saveButton(title, action).buttonStyle(.web(.primary)).tint(Theme.accent).disabled(saving)
             } else {
-                saveButton(title, action).buttonStyle(.glass).tint(Theme.accent).disabled(saving)
+                saveButton(title, action).buttonStyle(.web(.outline)).tint(Theme.accent).disabled(saving)
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -269,9 +268,9 @@ struct KimiConfigSection: View {
     private func disclosure<C: View>(_ title: LocalizedStringKey, isOpen: Binding<Bool>, @ViewBuilder content: () -> C) -> some View {
         Button { withAnimation(.snappy(duration: 0.2)) { isOpen.wrappedValue.toggle() } } label: {
             HStack(spacing: 8) {
-                Text(title).font(.subheadline).foregroundStyle(Theme.textPrimary)
+                Text(title).font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
                     .rotationEffect(.degrees(isOpen.wrappedValue ? 90 : 0))
             }
@@ -284,7 +283,7 @@ struct KimiConfigSection: View {
 
     private func caption(_ text: LocalizedStringKey, isError: Bool = false) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(isError ? Theme.danger : Theme.textTertiary)
+            .font(WebTheme.sans(12)).foregroundStyle(isError ? Theme.danger : Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.bottom, 12)

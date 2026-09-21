@@ -86,11 +86,10 @@ struct GitCredentialSheet: View {
 
     private var retryHint: some View {
         HStack(alignment: .top, spacing: 9) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
+            LucideIcon(sf: "exclamationmark.triangle.fill", size: 14)
                 .foregroundStyle(Theme.warning)
             Text("Authentication failed. Check your credentials and try again.")
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -109,7 +108,7 @@ struct GitCredentialSheet: View {
                 HStack(spacing: 8) {
                     secretField(placeholder: "ghp_…", text: $token)
                     Button("Generate") { generateToken() }
-                        .font(.caption.weight(.semibold))
+                        .font(WebTheme.sans(12, .semibold))
                         .buttonStyle(.plain)
                         .foregroundStyle(Theme.accent)
                         .disabled(submitting)
@@ -137,7 +136,7 @@ struct GitCredentialSheet: View {
             Divider().overlay(Theme.hairline)
             Toggle(isOn: $saveCredentials) {
                 Text("Save for future operations")
-                    .font(.callout)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
             }
             .tint(Theme.accent)
@@ -260,11 +259,10 @@ private struct CredentialErrorBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
+            LucideIcon(sf: "exclamationmark.triangle.fill", size: 14)
                 .foregroundStyle(Theme.danger)
             Text(message)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.danger)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

@@ -58,13 +58,11 @@ struct ReasoningBlock: View {
                 withAnimation(.snappy(duration: 0.22)) { expanded.toggle() }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "brain")
-                        .font(.system(size: 11, weight: .semibold))
+                    LucideIcon(sf: "brain", size: 11)
                     (streaming ? Text("Thinking…") : Text("Reasoning"))
-                        .font(.caption.weight(.semibold))
+                        .font(WebTheme.sans(12, .semibold))
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .bold))
+                    LucideIcon(sf: "chevron.right", size: 10)
                         .rotationEffect(.degrees(expanded ? 90 : 0))
                 }
                 .foregroundStyle(Theme.textTertiary)
@@ -136,7 +134,7 @@ struct InlineImageView: View {
             }
             if let caption, !caption.isEmpty {
                 Text(caption)
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.textTertiary)
                     .italic()
                     .fixedSize(horizontal: false, vertical: true)
@@ -156,7 +154,7 @@ struct InlineImageView: View {
                 ProgressView().controlSize(.small)
             }
         }
-        .font(.caption)
+        .font(WebTheme.sans(12))
         .foregroundStyle(Theme.textTertiary)
         .frame(maxWidth: .infinity, minHeight: failed ? 56 : 120)
         .background(Theme.surfaceNested, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))

@@ -16,19 +16,18 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Image(systemName: "chevron.left.forwardslash.chevron.right")
-                    .font(.system(size: 34, weight: .semibold))
+                LucideIcon(sf: "chevron.left.forwardslash.chevron.right", size: 34)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 84, height: 84)
-                    .glassEffect(.regular.tint(Theme.accentDim), in: RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous))
+                    .background(WebTheme.muted, in: RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous))
                     .hairlineBorder(Theme.Radius.xl, color: Theme.accent.opacity(0.3))
                     .padding(.bottom, 24)
 
                 Text("Codeg")
-                    .font(.largeTitle.weight(.bold))
+                    .font(WebTheme.sans(24, .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Your coding agents, in your pocket.")
-                    .font(.headline)
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 4)
 
@@ -49,7 +48,7 @@ struct OnboardingView: View {
                     showEditor = true
                 }
                 Text("Codeg connects to a codeg server you run — usually on your dev machine.")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.textTertiary)
                     .multilineTextAlignment(.center)
                     .padding(.top, 10)
@@ -68,16 +67,16 @@ struct OnboardingView: View {
     private func bullet(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .font(.body.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 28, height: 28)
                 .background(Theme.accentDim, in: RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text(detail)
-                    .font(.footnote)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

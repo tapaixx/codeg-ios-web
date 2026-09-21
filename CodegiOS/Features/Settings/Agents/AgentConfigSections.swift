@@ -136,8 +136,7 @@ struct ClaudeConfigSection: View {
             HStack(spacing: 8) {
                 Text("Default Models by Tier").foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
                     .rotationEffect(.degrees(showTierModels ? 90 : 0))
             }
@@ -180,7 +179,7 @@ struct ClaudeConfigSection: View {
     /// Tight tertiary caption that sits inside a row (less padding than `hint`).
     private func subCaption(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(Theme.textTertiary)
+            .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.bottom, 12)
@@ -188,7 +187,7 @@ struct ClaudeConfigSection: View {
 
     private func hint(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(Theme.textTertiary)
+            .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -272,9 +271,9 @@ struct CodexConfigSection: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Signed in via ChatGPT subscription").foregroundStyle(Theme.textPrimary)
                 Text("Manage sign-in on the desktop app. Switch to a custom API key below if you prefer.")
-                    .font(.caption).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
+                    .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
                 Button("Switch to API key") { setAuth(.apiKey) }
-                    .font(.subheadline).buttonStyle(.plain).foregroundStyle(Theme.accent)
+                    .font(WebTheme.sans(14)).buttonStyle(.plain).foregroundStyle(Theme.accent)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -332,7 +331,7 @@ struct GeminiConfigSection: View {
                     divider
                     FieldRow(label: "Sign-in") {
                         Text("Run `gemini` once on the server to complete Google OAuth.")
-                            .font(.caption).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
+                            .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -490,7 +489,7 @@ struct CodeBuddyConfigSection: View {
 
     private func caption(_ text: LocalizedStringKey, isError: Bool = false) -> some View {
         Text(text)
-            .font(.caption)
+            .font(WebTheme.sans(12))
             .foregroundStyle(isError ? Theme.danger : Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -549,7 +548,7 @@ struct GrokConfigSection: View {
 
     private func caption(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(Theme.textTertiary)
+            .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.bottom, 12)

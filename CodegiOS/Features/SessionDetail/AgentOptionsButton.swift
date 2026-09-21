@@ -210,7 +210,7 @@ private struct AgentOptionsSheet: View {
                     // so switching animates a gentle pop (paired with the ring).
                     .scaleEffect(isSelected ? 1 : 0.92)
                 Text(agent.shortName)
-                    .font(.caption2.weight(isSelected ? .semibold : .regular))
+                    .font(WebTheme.sans(11, isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? Theme.textPrimary : Theme.textSecondary)
                     .lineLimit(1)
             }
@@ -256,18 +256,17 @@ private struct AgentOptionsSheet: View {
             }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "folder.fill")
-                    .font(.caption)
+                LucideIcon(sf: "folder.fill", size: 12)
                     .foregroundStyle(Theme.accent)
                 VStack(alignment: .leading, spacing: 1) {
                     if let n = ns.selectedFolder?.name {
                         Text(verbatim: n)
-                            .font(.callout.weight(.medium))
+                            .font(WebTheme.sans(14, .medium))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                     } else {
                         Text("Choose a folder")
-                            .font(.callout.weight(.medium))
+                            .font(WebTheme.sans(14, .medium))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                     }
@@ -280,8 +279,7 @@ private struct AgentOptionsSheet: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2.weight(.bold))
+                LucideIcon(sf: "chevron.up.chevron.down", size: 11)
                     .foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -296,12 +294,11 @@ private struct AgentOptionsSheet: View {
     /// working dir, so the folder can't be switched (only the branch can).
     private func folderReadOnlyRow(_ branch: SessionBranchConfig) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "folder.fill")
-                .font(.caption)
+            LucideIcon(sf: "folder.fill", size: 12)
                 .foregroundStyle(Theme.textTertiary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(branch.folderName ?? "—")
-                    .font(.callout.weight(.medium))
+                    .font(WebTheme.sans(14, .medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 if let path = branch.folderPath {
@@ -313,8 +310,7 @@ private struct AgentOptionsSheet: View {
                 }
             }
             Spacer(minLength: 8)
-            Image(systemName: "lock.fill")
-                .font(.caption2)
+            LucideIcon(sf: "lock.fill", size: 11)
                 .foregroundStyle(Theme.textTertiary)
         }
         .padding(.horizontal, 14)
@@ -331,12 +327,11 @@ private struct AgentOptionsSheet: View {
             // Mirror the folder row's two-line layout (label + mono value) so the
             // two rows in the Workspace card are exactly the same height.
             HStack(spacing: 8) {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.caption)
+                LucideIcon(sf: "arrow.triangle.branch", size: 12)
                     .foregroundStyle(isBusy ? Theme.textTertiary : Theme.accent)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Branch")
-                        .font(.callout.weight(.medium))
+                        .font(WebTheme.sans(14, .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     Group {
@@ -352,8 +347,7 @@ private struct AgentOptionsSheet: View {
                         .truncationMode(.middle)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.bold))
+                LucideIcon(sf: "chevron.right", size: 11)
                     .foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -371,23 +365,23 @@ private struct AgentOptionsSheet: View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(Theme.accent)
             Text(message)
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.textSecondary)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+        .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
         .hairlineBorder(Theme.Radius.md)
     }
 
     private func errorCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(message)
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.danger)
                 .fixedSize(horizontal: false, vertical: true)
             Button("Try Again") { options.load() }
-                .buttonStyle(.glass)
+                .buttonStyle(.web(.outline))
                 .tint(Theme.accent)
         }
         .padding(14)
@@ -470,7 +464,7 @@ private struct AgentOptionsSheet: View {
 
     private func groupHeader(_ name: String) -> some View {
         Text(name)
-            .font(.caption2.weight(.semibold))
+            .font(WebTheme.sans(11, .semibold))
             .foregroundStyle(Theme.textTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)
@@ -489,7 +483,7 @@ private struct AgentOptionsSheet: View {
     /// chrome or `Text(verbatim:)` for dynamic server notices.
     private func hint(_ text: Text, tint: Color = Theme.textTertiary) -> some View {
         text
-            .font(.caption)
+            .font(WebTheme.sans(12))
             .foregroundStyle(tint)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
@@ -507,11 +501,11 @@ struct OptionSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             title
                 .textCase(.uppercase)
-                .font(.caption2.weight(.semibold))
+                .font(WebTheme.sans(11, .semibold))
                 .foregroundStyle(Theme.textTertiary)
                 .padding(.horizontal, 4)
             VStack(spacing: 0) { content() }
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+                .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
                 .hairlineBorder(Theme.Radius.md)
         }
     }
@@ -531,11 +525,11 @@ private struct OptionRow: View {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.callout.weight(.medium))
+                        .font(WebTheme.sans(14, .medium))
                         .foregroundStyle(Theme.textPrimary)
                     if let subtitle, !subtitle.isEmpty {
                         Text(subtitle)
-                            .font(.caption)
+                            .font(WebTheme.sans(12))
                             .foregroundStyle(Theme.textTertiary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
@@ -545,8 +539,7 @@ private struct OptionRow: View {
                 if isApplying {
                     ProgressView().controlSize(.small)
                 } else if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .bold))
+                    LucideIcon(sf: "checkmark", size: 13)
                         .foregroundStyle(Theme.accent)
                 }
             }

@@ -34,8 +34,7 @@ private struct AttachmentChip: View {
             .hairlineBorder(Theme.Radius.sm)
             .overlay(alignment: .topTrailing) {
                 Button(action: onRemove) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
+                    LucideIcon(sf: "xmark", size: 9)
                         .foregroundStyle(Theme.textPrimary)
                         .padding(4)
                         .background(.black.opacity(0.55), in: Circle())
@@ -55,8 +54,7 @@ private struct AttachmentChip: View {
         } else {
             ZStack {
                 Color.primary.opacity(0.06)
-                Image(systemName: "photo")
-                    .font(.system(size: 18))
+                LucideIcon(sf: "photo", size: 18)
                     .foregroundStyle(Theme.textTertiary)
             }
         }

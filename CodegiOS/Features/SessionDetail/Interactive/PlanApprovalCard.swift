@@ -39,7 +39,7 @@ struct PlanApprovalCard: View {
             if changesOpen { notesField }
             if failed {
                 Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.danger)
             }
             actions
@@ -56,15 +56,14 @@ struct PlanApprovalCard: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "checklist")
-                .font(.system(size: 16, weight: .semibold))
+            LucideIcon(sf: "checklist", size: 16)
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Plan ready for review")
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Approve to start building, or send notes to have the plan revised.")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -77,7 +76,7 @@ struct PlanApprovalCard: View {
     @ViewBuilder private var planBody: some View {
         if plan.isEmpty {
             Text("The agent didn’t include a plan.")
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
@@ -93,7 +92,7 @@ struct PlanApprovalCard: View {
 
     private var notesField: some View {
         TextField("What should change?", text: $feedback, axis: .vertical)
-            .font(.subheadline)
+            .font(WebTheme.sans(14))
             .lineLimit(2...5)
             .padding(8)
             .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous))
@@ -114,7 +113,7 @@ struct PlanApprovalCard: View {
                     }
                 } label: {
                     Text(changesOpen ? "Send Notes" : "Request Changes")
-                        .font(.subheadline.weight(.medium))
+                        .font(WebTheme.sans(14, .medium))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .foregroundStyle(Theme.textPrimary)
@@ -127,7 +126,7 @@ struct PlanApprovalCard: View {
                 Button { Task { await submit(.approve, nil) } } label: {
                     HStack(spacing: 6) {
                         if submitting { ProgressView().controlSize(.mini).tint(Theme.onAccent) }
-                        Text("Approve & Build").font(.subheadline.weight(.semibold))
+                        Text("Approve & Build").font(WebTheme.sans(14, .semibold))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
@@ -140,7 +139,7 @@ struct PlanApprovalCard: View {
 
             Button { Task { await submit(.abandon, nil) } } label: {
                 Text("Abandon Plan")
-                    .font(.caption.weight(.medium))
+                    .font(WebTheme.sans(12, .medium))
                     .foregroundStyle(Theme.textSecondary)
             }
             .buttonStyle(.plain)

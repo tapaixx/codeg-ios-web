@@ -89,8 +89,7 @@ struct BranchPickerView: View {
             Task { await switchTo(display: name, target: target, isRemote: isRemote) }
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.caption)
+                LucideIcon(sf: "arrow.triangle.branch", size: 12)
                     .foregroundStyle(occupied ? Theme.textTertiary : Theme.accent)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(name)
@@ -100,7 +99,7 @@ struct BranchPickerView: View {
                         .truncationMode(.middle)
                     if occupied {
                         Text("Checked out in another worktree")
-                            .font(.caption2)
+                            .font(WebTheme.sans(11))
                             .foregroundStyle(Theme.textTertiary)
                     }
                 }
@@ -108,8 +107,7 @@ struct BranchPickerView: View {
                 if switching == name {
                     ProgressView().controlSize(.small)
                 } else if target == current {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .bold))
+                    LucideIcon(sf: "checkmark", size: 13)
                         .foregroundStyle(Theme.accent)
                 }
             }
@@ -138,19 +136,19 @@ struct BranchPickerView: View {
                 HStack(spacing: 12) {
                     if let current {
                         Text("From \(current)")
-                            .font(.caption2)
+                            .font(WebTheme.sans(11))
                             .foregroundStyle(Theme.textTertiary)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
                     Button("Cancel") { showNewBranch = false; newName = "" }
-                        .font(.callout)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                     Button { Task { await create() } } label: {
                         if creating {
                             ProgressView().controlSize(.small)
                         } else {
-                            Text("Create").font(.callout.weight(.semibold))
+                            Text("Create").font(WebTheme.sans(14, .semibold))
                         }
                     }
                     .foregroundStyle(Theme.accent)
@@ -158,7 +156,7 @@ struct BranchPickerView: View {
                 }
             }
             .padding(14)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+            .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
             .hairlineBorder(Theme.Radius.md)
         } else {
             Button { showNewBranch = true } label: {
@@ -166,7 +164,7 @@ struct BranchPickerView: View {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(Theme.accent)
                     Text("New Branch")
-                        .font(.callout.weight(.medium))
+                        .font(WebTheme.sans(14, .medium))
                         .foregroundStyle(Theme.textPrimary)
                     Spacer(minLength: 0)
                 }
@@ -175,7 +173,7 @@ struct BranchPickerView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+            .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
             .hairlineBorder(Theme.Radius.md)
         }
     }
@@ -184,13 +182,12 @@ struct BranchPickerView: View {
 
     private var searchField: some View {
         HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .font(.caption)
+            LucideIcon(sf: "magnifyingglass", size: 12)
                 .foregroundStyle(Theme.textTertiary)
             TextField("Filter branches", text: $search)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.callout)
+                .font(WebTheme.sans(14))
             if !search.isEmpty {
                 Button { search = "" } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textTertiary)
@@ -207,7 +204,7 @@ struct BranchPickerView: View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(Theme.accent)
             Text("Loading branches…")
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.textSecondary)
         }
         .padding(14)
@@ -216,7 +213,7 @@ struct BranchPickerView: View {
 
     private var emptyRow: some View {
         Text(search.isEmpty ? "No branches found." : "No branches match “\(search)”.")
-            .font(.caption)
+            .font(WebTheme.sans(12))
             .foregroundStyle(Theme.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 4)

@@ -143,11 +143,11 @@ struct SystemSettingsView: View {
                             Text("Test")
                         }
                     }
-                    .buttonStyle(.glass).tint(Theme.accent)
+                    .buttonStyle(.web(.outline)).tint(Theme.accent)
                     .disabled(model.probing || model.customShellPath.trimmingCharacters(in: .whitespaces).isEmpty)
                     if let probe = model.probeResult {
                         Label(probe ? "Executable found" : "Not found", systemImage: probe ? "checkmark.circle" : "xmark.circle")
-                            .font(.caption)
+                            .font(WebTheme.sans(12))
                             .foregroundStyle(probe ? Color(red: 0.30, green: 0.78, blue: 0.38) : Theme.danger)
                     }
                     Spacer(minLength: 0)
@@ -174,17 +174,17 @@ struct SystemSettingsView: View {
                 Divider().overlay(Theme.hairline)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Current version \(info.currentVersion)")
-                        .font(.subheadline).foregroundStyle(Theme.textSecondary)
+                        .font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                     if let update = info.update {
                         Text("Update available: v\(update.version)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(Theme.accent)
                         if !update.body.isEmpty {
-                            Text(update.body).font(.caption).foregroundStyle(Theme.textTertiary).lineLimit(4)
+                            Text(update.body).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).lineLimit(4)
                         }
                     } else {
                         Label("You’re up to date.", systemImage: "checkmark.circle")
-                            .font(.subheadline).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
+                            .font(WebTheme.sans(14)).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -219,11 +219,11 @@ struct SystemSettingsView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16).padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24).padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .task(id: toast) {

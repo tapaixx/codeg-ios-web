@@ -52,8 +52,7 @@ struct ToolGroupCard: View {
                     .background(Theme.danger.opacity(0.16), in: Capsule())
             }
             Spacer(minLength: 4)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "chevron.right", size: 9)
                 .foregroundStyle(Theme.textTertiary)
                 .rotationEffect(.degrees(expanded ? 90 : 0))
         }
@@ -141,8 +140,7 @@ struct ToolCallCard: View {
             Spacer(minLength: 4)
             diffStat
             if hasBody {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .bold))
+                LucideIcon(sf: "chevron.right", size: 9)
                     .foregroundStyle(Theme.textTertiary)
                     .rotationEffect(.degrees(isExpanded ? 90 : 0))
             }
@@ -227,12 +225,10 @@ private struct ToolStateIndicator: View {
         case .running, .inputStreaming:
             LivePulse()
         case .done:
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 11, weight: .semibold))
+            LucideIcon(sf: "checkmark.circle.fill", size: 11)
                 .foregroundStyle(DiffPalette.addText.opacity(0.85))
         case .error:
-            Image(systemName: "exclamationmark.circle.fill")
-                .font(.system(size: 11, weight: .semibold))
+            LucideIcon(sf: "exclamationmark.circle.fill", size: 11)
                 .foregroundStyle(Theme.danger)
         }
     }
@@ -277,7 +273,7 @@ private struct FileInputBody: View {
         VStack(alignment: .leading, spacing: 6) {
             if let path = strArg(args, ["file_path", "path", "filename", "file", "target_file"]) {
                 HStack(spacing: 6) {
-                    Image(systemName: "doc").font(.system(size: 10)).foregroundStyle(Theme.textTertiary)
+                    LucideIcon(sf: "doc", size: 10).foregroundStyle(Theme.textTertiary)
                     Text(path)
                         .font(.mono(11)).foregroundStyle(Theme.textSecondary)
                         .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
@@ -339,10 +335,10 @@ private struct TodoInputBody: View {
                 let status = (todo["status"] as? String) ?? "pending"
                 HStack(alignment: .top, spacing: 7) {
                     Image(systemName: todoIcon(status))
-                        .font(.system(size: 11))
+                        .font(WebTheme.sans(11))
                         .foregroundStyle(todoTint(status))
                     Text((todo["content"] as? String) ?? (todo["title"] as? String) ?? "")
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(status == "completed" ? Theme.textTertiary : Theme.textSecondary)
                         .strikethrough(status == "completed")
                         .fixedSize(horizontal: false, vertical: true)
@@ -384,7 +380,7 @@ private struct WebInputBody: View {
     }
     private func pill(icon: String, text: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 10)).foregroundStyle(Theme.textTertiary)
+            Image(systemName: icon).font(WebTheme.sans(10)).foregroundStyle(Theme.textTertiary)
             Text(text).font(.mono(11)).foregroundStyle(Theme.textSecondary)
                 .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
         }
@@ -446,8 +442,8 @@ private struct ToolErrorOutput: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 5) {
-                Image(systemName: "xmark.octagon.fill").font(.system(size: 10, weight: .semibold))
-                Text("Error output").font(.caption2.weight(.semibold))
+                LucideIcon(sf: "xmark.octagon.fill", size: 10)
+                Text("Error output").font(WebTheme.sans(11, .semibold))
             }
             .foregroundStyle(Theme.danger)
 

@@ -50,17 +50,16 @@ struct LivePlanView: View {
         // the card header leads straight with the "Plan" label.
         HStack(spacing: 8) {
             Text("Plan")
-                .font(.subheadline.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(Theme.textPrimary)
             Spacer(minLength: 8)
             Text(verbatim: "\(completed)/\(entries.count)")
-                .font(.caption.weight(.semibold).monospacedDigit())
+                .font(WebTheme.sans(12, .semibold).monospacedDigit())
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 2)
                 .background(Theme.surfaceNested, in: Capsule())
-            Image(systemName: "chevron.down")
-                .font(.system(size: 11, weight: .semibold))
+            LucideIcon(sf: "chevron.down", size: 11)
                 .foregroundStyle(Theme.textTertiary)
                 .rotationEffect(.degrees(isExpanded ? 0 : -90))
         }

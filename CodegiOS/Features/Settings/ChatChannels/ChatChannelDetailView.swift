@@ -84,12 +84,12 @@ struct ChatChannelDetailView: View {
             HStack(spacing: 12) {
                 ChannelTypeAvatar(type: channel.channelType, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(channel.name).font(.title3.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                    Text(channel.name).font(WebTheme.sans(16, .semibold)).foregroundStyle(Theme.textPrimary)
                     HStack(spacing: 6) {
                         Circle().fill(model.status.tint).frame(width: 7, height: 7)
-                        Text(model.status.label).font(.caption).foregroundStyle(Theme.textSecondary)
+                        Text(model.status.label).font(WebTheme.sans(12)).foregroundStyle(Theme.textSecondary)
                         Text("·").foregroundStyle(Theme.textTertiary)
-                        Text(channel.channelType.displayName).font(.caption).foregroundStyle(Theme.textTertiary)
+                        Text(channel.channelType.displayName).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                     }
                 }
                 Spacer(minLength: 0)
@@ -148,7 +148,7 @@ struct ChatChannelDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.web(.outline))
         .tint(role == .destructive ? Theme.danger : Theme.accent)
         .disabled(model.busy)
     }
@@ -178,7 +178,7 @@ struct ChatChannelDetailView: View {
                 Spacer(minLength: 8)
                 if model.hasToken {
                     Button("Remove", role: .destructive) { confirmRemoveToken = true }
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .tint(Theme.danger)
                 }
             }
@@ -192,7 +192,7 @@ struct ChatChannelDetailView: View {
         EditorSection(title: "Recent Messages") {
             if model.messages.isEmpty {
                 Text("No messages yet.")
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
@@ -210,12 +210,12 @@ struct ChatChannelDetailView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -233,16 +233,16 @@ private struct MessageLogRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: message.isInbound ? "arrow.down.left" : "arrow.up.right")
-                .font(.caption.weight(.semibold))
+                .font(WebTheme.sans(12, .semibold))
                 .foregroundStyle(message.failed ? Theme.danger : Theme.textSecondary)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(message.contentPreview.isEmpty ? "(\(message.messageType))" : message.contentPreview)
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
                 if message.failed, let detail = message.errorDetail, !detail.isEmpty {
-                    Text(detail).font(.caption2).foregroundStyle(Theme.danger).lineLimit(1)
+                    Text(detail).font(WebTheme.sans(11)).foregroundStyle(Theme.danger).lineLimit(1)
                 }
             }
             Spacer(minLength: 0)

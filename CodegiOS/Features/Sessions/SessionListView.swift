@@ -393,11 +393,10 @@ struct SessionListView: View {
         } label: {
             HStack(spacing: 5) {
                 Text(server.name)
-                    .font(.headline.weight(.bold))
+                    .font(WebTheme.sans(14, .bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
-                Image(systemName: "chevron.down")
-                    .font(.caption.weight(.bold))
+                LucideIcon(sf: "chevron.down", size: 12)
                     .foregroundStyle(Theme.textSecondary)
             }
             .fixedSize()

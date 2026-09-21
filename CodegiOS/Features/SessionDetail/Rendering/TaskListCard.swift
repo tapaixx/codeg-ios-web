@@ -49,7 +49,7 @@ struct TaskListCard: View {
                 // header shows "Updating tasks…" + the live pulse instead.
                 if !isRunning {
                     Text("No tasks")
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textTertiary)
                 }
             } else {
@@ -94,7 +94,7 @@ struct TaskListCard: View {
             withAnimation(Theme.Motion.expand) { expanded.toggle() }
         } label: {
             (expanded ? Text("Show less") : Text("Show \(hidden) more"))
-                .font(.system(size: 11, weight: .semibold))
+                .font(WebTheme.sans(11, .semibold))
                 .foregroundStyle(Theme.accent)
                 .padding(.vertical, 3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,7 +125,7 @@ private struct TaskRow: View {
                             .foregroundStyle(Theme.textTertiary)
                     }
                     Text(row.title)
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(titleColor)
                         .strikethrough(struck, color: Theme.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -133,7 +133,7 @@ private struct TaskRow: View {
                 }
                 if let desc = row.description, !desc.isEmpty {
                     Text(desc)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -170,7 +170,7 @@ struct TaskStatusIcon: View {
 
     private func icon(_ name: String, _ tint: Color) -> some View {
         Image(systemName: name)
-            .font(.system(size: 13))
+            .font(WebTheme.sans(13))
             .foregroundStyle(tint)
     }
 }

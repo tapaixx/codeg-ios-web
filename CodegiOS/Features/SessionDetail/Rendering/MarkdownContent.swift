@@ -216,7 +216,7 @@ private struct MarkdownTable: View {
         HStack(alignment: .top, spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
                 Text(cell)
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .fontWeight(isHeader ? .semibold : .regular)
                     .foregroundStyle(isHeader ? Theme.textPrimary : Theme.textSecondary)
                     .frame(width: 130, alignment: .leading)

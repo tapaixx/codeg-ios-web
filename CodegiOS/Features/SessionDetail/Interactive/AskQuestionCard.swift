@@ -65,7 +65,7 @@ struct AskQuestionCard: View {
 
             if failed, !readOnly {
                 Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.danger)
             }
 
@@ -98,20 +98,20 @@ struct AskQuestionCard: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: readOnly ? "questionmark.bubble.fill" : "bubble.left.and.text.bubble.right.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(WebTheme.sans(16, .semibold))
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(titleOverride ?? "The agent needs your input")
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 if let subtitleOverride {
                     Text(subtitleOverride)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 } else if !readOnly {
                     Text("Answer below, then submit. You can skip anytime.")
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -119,7 +119,7 @@ struct AskQuestionCard: View {
             Spacer(minLength: 8)
             if !readOnly, pending.questions.count > 1 {
                 Text(verbatim: "\(answeredCount)/\(pending.questions.count)")
-                    .font(.caption.weight(.medium).monospacedDigit())
+                    .font(WebTheme.sans(12, .medium).monospacedDigit())
                     .foregroundStyle(Theme.textTertiary)
             }
         }
@@ -128,7 +128,7 @@ struct AskQuestionCard: View {
     private var footer: some View {
         HStack(spacing: 12) {
             Button { Task { await submit(.dismissed) } } label: {
-                Text("Skip").font(.subheadline.weight(.medium))
+                Text("Skip").font(WebTheme.sans(14, .medium))
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.textSecondary)
@@ -139,7 +139,7 @@ struct AskQuestionCard: View {
             Button { Task { await submit(answer) } } label: {
                 HStack(spacing: 6) {
                     if submitting { ProgressView().controlSize(.mini).tint(Theme.onAccent) }
-                    Text("Submit").font(.subheadline.weight(.semibold))
+                    Text("Submit").font(WebTheme.sans(14, .semibold))
                 }
                 .frame(minWidth: 96)
                 .padding(.vertical, 9)
@@ -158,20 +158,20 @@ struct AskQuestionCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(question.multiSelect ? "Multiple" : "Single")
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(Color.primary.opacity(0.06), in: Capsule())
                 if pending.questions.count > 1, !question.header.isEmpty {
                     Text(verbatim: question.header)
-                        .font(.caption.weight(.semibold))
+                        .font(WebTheme.sans(12, .semibold))
                         .foregroundStyle(Theme.textTertiary)
                 }
                 Spacer(minLength: 0)
             }
 
             Text(verbatim: question.question)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -197,12 +197,12 @@ struct AskQuestionCard: View {
                     let parts = AskQuestionParse.splitRecommended(label)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(verbatim: parts.text)
-                            .font(.subheadline)
+                            .font(WebTheme.sans(14))
                             .foregroundStyle(Theme.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                         if parts.recommended {
                             Text("Recommended")
-                                .font(.caption2.weight(.semibold))
+                                .font(WebTheme.sans(11, .semibold))
                                 .foregroundStyle(Theme.accent)
                                 .padding(.horizontal, 6).padding(.vertical, 1)
                                 .background(Theme.accent.opacity(0.14), in: Capsule())
@@ -210,7 +210,7 @@ struct AskQuestionCard: View {
                     }
                     if !description.isEmpty {
                         Text(verbatim: description)
-                            .font(.caption)
+                            .font(WebTheme.sans(12))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -238,7 +238,7 @@ struct AskQuestionCard: View {
                 HStack(spacing: 10) {
                     indicator(selected: selected, multi: question.multiSelect)
                     Text("Other")
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textPrimary)
                     Spacer(minLength: 0)
                 }
@@ -255,7 +255,7 @@ struct AskQuestionCard: View {
 
             if selected {
                 TextField("Type your answer…", text: otherBinding(question.id), axis: .vertical)
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .lineLimit(1...3)
                     .padding(8)
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous))
@@ -269,7 +269,7 @@ struct AskQuestionCard: View {
         Image(systemName: multi
               ? (selected ? "checkmark.square.fill" : "square")
               : (selected ? "largecircle.fill.circle" : "circle"))
-            .font(.system(size: 18))
+            .font(WebTheme.sans(18))
             .foregroundStyle(selected ? Theme.accent : Theme.textTertiary)
     }
 

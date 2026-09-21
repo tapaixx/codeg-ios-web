@@ -36,14 +36,14 @@ struct OpenCodeConfigSection: View {
 
             EditorSection(title: "Providers · \(providerIds.count)") {
                 if providerIds.isEmpty {
-                    Text("No providers yet.").font(.subheadline).foregroundStyle(Theme.textTertiary)
+                    Text("No providers yet.").font(WebTheme.sans(14)).foregroundStyle(Theme.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 11)
                 }
                 ForEach(providerIds, id: \.self) { pid in
                     providerCard(pid)
                 }
                 Button { newProviderId = ""; showAddProvider = true } label: {
-                    Label("Add Provider", systemImage: "plus").font(.subheadline)
+                    Label("Add Provider", systemImage: "plus").font(WebTheme.sans(14))
                 }
                 .buttonStyle(.plain).foregroundStyle(Theme.accent)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 11)
@@ -69,7 +69,7 @@ struct OpenCodeConfigSection: View {
         GlassCard(cornerRadius: Theme.Radius.md, padding: 12) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text(pid).font(.headline).foregroundStyle(Theme.textPrimary)
+                    Text(pid).font(WebTheme.sans(14, .semibold)).foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Button(role: .destructive) { deleteProvider(pid) } label: {
                         Image(systemName: "trash").foregroundStyle(Theme.danger)
@@ -85,7 +85,7 @@ struct OpenCodeConfigSection: View {
 
                 let mids = modelIds(pid)
                 Divider().overlay(Theme.hairline)
-                Text("MODELS · \(mids.count)").font(.caption.weight(.semibold))
+                Text("MODELS · \(mids.count)").font(WebTheme.sans(12, .semibold))
                     .foregroundStyle(Theme.textTertiary).tracking(0.5)
                 ForEach(mids, id: \.self) { mid in
                     HStack(spacing: 8) {
@@ -98,7 +98,7 @@ struct OpenCodeConfigSection: View {
                     }
                 }
                 Button { newModelId = ""; addModelTo = pid } label: {
-                    Label("Add Model", systemImage: "plus").font(.caption)
+                    Label("Add Model", systemImage: "plus").font(WebTheme.sans(12))
                 }.buttonStyle(.plain).foregroundStyle(Theme.accent)
             }
         }
@@ -107,7 +107,7 @@ struct OpenCodeConfigSection: View {
 
     private func labeled<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.caption).foregroundStyle(Theme.textTertiary)
+            Text(label).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
             content()
         }
     }

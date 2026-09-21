@@ -74,7 +74,7 @@ struct ComposeBar: View {
                         // `xl` radius clamps to a capsule while the field is one
                         // line (rhyming with the round +/send buttons) and relaxes
                         // to a rounded rect as it grows — no hard switch needed.
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous))
+                        .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.xl, style: .continuous))
                         .hairlineBorder(Theme.Radius.xl)
 
                     actionButton
@@ -157,11 +157,10 @@ struct ComposeBar: View {
                 }
             }
         } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 16, weight: .semibold))
+            LucideIcon(sf: "plus", size: 16)
                 .frame(width: 26, height: 26)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.web(.outline))
         .clipShape(Circle())
         .tint(Theme.textSecondary)
         .accessibilityLabel("Add or insert")
@@ -171,22 +170,20 @@ struct ComposeBar: View {
     private var actionButton: some View {
         if isInFlight {
             Button(action: onStop) {
-                Image(systemName: "stop.fill")
-                    .font(.system(size: 16, weight: .bold))
+                LucideIcon(sf: "stop.fill", size: 16)
                     .frame(width: 26, height: 26)
             }
-            .buttonStyle(.glassProminent)
+            .buttonStyle(.web(.primary))
             .tint(Theme.danger)
             .clipShape(Circle())
             .transition(.scale.combined(with: .opacity))
             .accessibilityLabel("Stop")
         } else {
             Button(action: send) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 16, weight: .bold))
+                LucideIcon(sf: "arrow.up", size: 16)
                     .frame(width: 26, height: 26)
             }
-            .buttonStyle(.glassProminent)
+            .buttonStyle(.web(.primary))
             .tint(Theme.accent)
             .clipShape(Circle())
             .disabled(!canSend)
@@ -259,24 +256,22 @@ private struct NoticeBanner: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 12, weight: .semibold))
+            LucideIcon(sf: "info.circle.fill", size: 12)
                 .foregroundStyle(Theme.accent)
             Text(message)
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
             Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .bold))
+                LucideIcon(sf: "xmark", size: 10)
                     .foregroundStyle(Theme.textTertiary)
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+        .background(WebTheme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
         .hairlineBorder(Theme.Radius.md, color: Theme.accent.opacity(0.35))
         .transition(.opacity.combined(with: .move(edge: .bottom)))
     }

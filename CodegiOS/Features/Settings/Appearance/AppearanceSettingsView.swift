@@ -1,42 +1,42 @@
 import SwiftUI
 
-/// Appearance settings: the theme mode (Light / Dark / System) and the accent
-/// color scheme. Both are purely local (device-scoped) preferences held in
-/// `AppearanceStore`, which is injected into the environment by `RootView`.
-/// Changing either recolors the whole app live — mode via `.preferredColorScheme`
-/// and accent via the `\.codegAccent` trait bridge. This screen's own accent-tinted
-/// bits (the theme rows and the preview) resolve the accent explicitly (see
-/// `resolvedAccent`) instead of through that trait, so they recolor correctly even
-/// when the screen is presented in a separate hosting controller — the iPad
-/// Settings sheet — which the bridged trait can't reach.
+/// Appearance settings: the theme mode (Light / Dark / System) and the shadcn
+/// theme preset — the same two knobs the web client's Appearance page offers
+/// (`src/components/settings/appearance-settings.tsx`), with the same 12 presets
+/// in the same order.
+///
+/// Both are device-local preferences held in `AppearanceStore`, injected into the
+/// environment by `RootView`. Changing either recolors the whole app live: mode
+/// via `.preferredColorScheme`, preset via the `\.webTheme` trait bridge.
+///
+/// This screen's own themed bits resolve their colors *explicitly* (see
+/// ``resolvedPrimary``) rather than through `WebTheme`, because the bridged trait
+/// doesn't cross into a separately-presented hosting controller — the iPad
+/// Settings sheet — where the swatches would otherwise stay stuck on the
+/// previously active preset.
 struct AppearanceSettingsView: View {
     @Environment(AppearanceStore.self) private var appearance
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.colorScheme) private var colorScheme
 
-    // The accent resolved straight from the store + the standard color-scheme
-    // trait — NOT via `Theme.accent`, which reads the bridged `\.codegAccent`
-    // trait. That bridged trait doesn't cross into a separately-presented hosting
-    // controller, so on iPad — where Settings is a sheet — accent-tinted bits on
-    // this page would stay stuck at the default palette while the swatch grid
-    // (which reads `appearance.accent` directly) updates. `colorScheme` is a
-    // standard trait that *does* propagate into sheets, so these stay correct in
-    // every presentation context. Used by the theme rows and the preview.
-    private var resolvedAccent: Color { appearance.accent.fill(dark: colorScheme == .dark) }
-    private var resolvedOnAccent: Color { appearance.accent.onColor(dark: colorScheme == .dark) }
+    private var isDark: Bool { colorScheme == .dark }
+    /// The selected preset's `--primary`, resolved from the store plus the
+    /// standard color-scheme trait (which *does* propagate into sheets).
+    private var resolvedPrimary: Color { appearance.themeColor.primary(dark: isDark) }
+    private var resolvedOnPrimary: Color { appearance.themeColor.primaryForeground(dark: isDark) }
 
     var body: some View {
         ZStack {
             CodegBackground()
             ScrollView {
-                VStack(spacing: 22) {
-                    themeSection
-                    accentSection
+                VStack(spacing: WebTheme.Layout.sectionSpacing) {
+                    modeSection
+                    themeColorSection
                     previewSection
                 }
-                .padding(.horizontal, Theme.Layout.screenHMargin)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
+                .padding(.horizontal, WebTheme.Layout.screenHMargin)
+                .padding(.top, WebTheme.Layout.screenTopInset)
+                .padding(.bottom, WebTheme.Layout.screenBottomInset)
             }
             .scrollContentBackground(.hidden)
         }
@@ -45,101 +45,106 @@ struct AppearanceSettingsView: View {
 
     // MARK: - Theme mode
 
-    private var themeSection: some View {
+    private var modeSection: some View {
         EditorSection(
             title: "Theme",
             footer: "“System” follows your device's Light / Dark setting."
         ) {
             ForEach(Array(AppearanceMode.allCases.enumerated()), id: \.element) { index, mode in
-                if index > 0 { InsetDivider(leading: 16) }
+                if index > 0 { InsetDivider(leading: SettingsRowMetrics.dividerInset) }
                 SelectableRow(symbol: mode.symbol, title: mode.titleKey,
-                              isSelected: appearance.mode == mode, tint: resolvedAccent) {
+                              isSelected: appearance.mode == mode, tint: resolvedPrimary) {
                     appearance.mode = mode
                 }
             }
         }
     }
 
-    // MARK: - Accent
+    // MARK: - Theme color
 
-    private var accentSection: some View {
+    /// The web's grid: a small round swatch plus the preset's name, three or four
+    /// to a row. Deliberately not the app's old 54pt swatch circles — a theme
+    /// preset recolors chrome, not a brand, so it gets a chip, not a hero.
+    private var themeColorSection: some View {
         EditorSection(
-            title: "Accent Color",
-            footer: "The signature tint used across buttons, highlights, and icons."
+            title: "Theme Color",
+            footer: "The shadcn preset the web client uses. Grayscale presets keep the UI monochrome; the colored ones tint buttons, selection, and active marks."
         ) {
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 66), spacing: 14)],
-                spacing: 18
+                columns: [GridItem(.adaptive(minimum: 104), spacing: WebTheme.Space.two)],
+                spacing: WebTheme.Space.two
             ) {
-                ForEach(AccentPalette.allCases) { palette in
-                    swatch(palette)
+                ForEach(WebThemeColor.allCases) { preset in
+                    swatch(preset)
                 }
             }
-            .padding(16)
+            .padding(WebTheme.Space.four)
         }
     }
 
-    private func swatch(_ palette: AccentPalette) -> some View {
-        let isSelected = appearance.accent == palette
+    private func swatch(_ preset: WebThemeColor) -> some View {
+        let isSelected = appearance.themeColor == preset
         return Button {
-            appearance.accent = palette
+            appearance.themeColor = preset
         } label: {
-            VStack(spacing: 7) {
-                ZStack {
-                    Circle()
-                        .fill(palette.swatch)
-                        .frame(width: 44, height: 44)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 1))
-                    if isSelected {
-                        Circle()
-                            .strokeBorder(Theme.textPrimary, lineWidth: 2)
-                            .frame(width: 54, height: 54)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(palette.onColor(dark: colorScheme == .dark))
-                    }
-                }
-                .frame(width: 54, height: 54)
-                Text(palette.titleKey)
-                    .font(.caption2)
-                    .foregroundStyle(isSelected ? Theme.textPrimary : Theme.textTertiary)
+            HStack(spacing: WebTheme.Space.two) {
+                Circle()
+                    .fill(preset.primary(dark: isDark))
+                    .frame(width: WebTheme.Size.icon, height: WebTheme.Size.icon)
+                    .webBorder(cornerRadius: WebTheme.Radius.full, color: WebTheme.cardRing)
+                Text(preset.titleKey)
+                    .webText(.xs, .medium)
+                    .foregroundStyle(isSelected ? WebTheme.foreground : WebTheme.mutedForeground)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+            .padding(.horizontal, WebTheme.Space.two)
+            .frame(height: WebTheme.Size.controlSmall)
+            .background {
+                if isSelected {
+                    Capsule(style: .continuous).fill(WebTheme.muted)
+                }
+            }
+            .overlay {
+                if isSelected {
+                    Capsule(style: .continuous)
+                        .strokeBorder(resolvedPrimary.opacity(0.4), lineWidth: 1)
+                }
+            }
+            .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
-        .animation(.snappy(duration: 0.2), value: isSelected)
+        .animation(WebTheme.Motion.chrome, value: isSelected)
     }
 
     // MARK: - Live preview
 
+    /// A sample of the components the preset actually affects. Colors are the
+    /// explicitly resolved ones (see ``resolvedPrimary``) so this section is
+    /// correct inside the iPad Settings sheet too.
     private var previewSection: some View {
-        // Explicitly resolved (see `resolvedAccent`) so the sample chip, button,
-        // and accent text recolor even inside the iPad Settings sheet, which the
-        // bridged `Theme.accent` trait can't reach.
-        let accent = resolvedAccent
-        let onAccent = resolvedOnAccent
-        return EditorSection(title: "Preview") {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 8) {
+        EditorSection(title: "Preview") {
+            VStack(alignment: .leading, spacing: WebTheme.Space.three) {
+                HStack(spacing: WebTheme.Space.two) {
                     FilterChip(title: "Selected", systemImage: "checkmark",
-                               isSelected: true, tint: accent, onTint: onAccent) {}
+                               isSelected: true, tint: resolvedPrimary,
+                               onTint: resolvedOnPrimary) {}
                     FilterChip(title: "Idle", isSelected: false) {}
                     Spacer(minLength: 0)
                 }
-                PrimaryGlassButton(title: "Primary Action", systemImage: "sparkles",
-                                   tint: accent, onTint: onAccent) {}
-                HStack(spacing: 8) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(accent)
-                    Text("Accent text & icons")
-                        .foregroundStyle(accent)
+                FlatPrimaryButton(title: "Primary Action", systemImage: "sparkles",
+                                  tint: resolvedPrimary, onTint: resolvedOnPrimary) {}
+                HStack(spacing: WebTheme.Space.two) {
+                    Circle()
+                        .fill(resolvedPrimary)
+                        .frame(width: 10, height: 10)
+                    Text("Primary text & icons")
+                        .webText(.sm, .medium)
+                        .foregroundStyle(resolvedPrimary)
                     Spacer(minLength: 0)
                 }
-                .font(.subheadline.weight(.medium))
             }
-            .padding(16)
+            .padding(WebTheme.Space.four)
         }
     }
 }

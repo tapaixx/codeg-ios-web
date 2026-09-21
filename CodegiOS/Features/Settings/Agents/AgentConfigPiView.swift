@@ -113,7 +113,7 @@ struct PiConfigSection: View {
                 Text(mode == .default
                      ? "Use the bundled pi-acp adapter with the pi on your PATH. Install pi with: npm install -g @earendil-works/pi-coding-agent"
                      : "Run your own pi build, install, or wrapper.")
-                    .font(.caption).foregroundStyle(Theme.textTertiary)
+                    .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
@@ -123,7 +123,7 @@ struct PiConfigSection: View {
             divider
             HStack(spacing: 10) {
                 if customIncomplete {
-                    Text("Enter a pi command to save").font(.caption).foregroundStyle(Theme.textTertiary)
+                    Text("Enter a pi command to save").font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                 }
                 Spacer(minLength: 0)
                 actionButton("Save Runtime", icon: "square.and.arrow.down", busy: savingRuntime,
@@ -139,27 +139,27 @@ struct PiConfigSection: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 if checkingPi {
-                    Label("Checking…", systemImage: "hourglass").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                    Label("Checking…", systemImage: "hourglass").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                 } else if piStatus?.found == true {
                     Label {
                         Text(piStatus?.version.map { "Installed · \($0)" } ?? "Installed").foregroundStyle(Theme.textPrimary)
                     } icon: {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent)
                     }
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     if let path = piStatus?.resolvedPath, !path.isEmpty {
-                        Text(path).font(.caption.monospaced()).foregroundStyle(Theme.textTertiary)
+                        Text(path).font(WebTheme.mono(12)).foregroundStyle(Theme.textTertiary)
                             .lineLimit(1).truncationMode(.middle)
                     }
                 } else {
-                    Label("Not installed", systemImage: "xmark.circle").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                    Label("Not installed", systemImage: "xmark.circle").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                 }
             }
             Spacer(minLength: 8)
             Button { Task { await detectPiBinary() } } label: {
-                Image(systemName: "arrow.clockwise").font(.body.weight(.medium))
+                LucideIcon(sf: "arrow.clockwise", size: 14)
             }
-            .buttonStyle(.glass).tint(Theme.textSecondary)
+            .buttonStyle(.web(.outline)).tint(Theme.textSecondary)
             .disabled(checkingPi || piOp != nil)
             .accessibilityLabel("Recheck")
             if !checkingPi {
@@ -184,7 +184,7 @@ struct PiConfigSection: View {
                     if validating { ProgressView().controlSize(.small) }
                     else { Label("Validate", systemImage: "terminal").labelStyle(.titleAndIcon) }
                 }
-                .font(.subheadline.weight(.medium)).buttonStyle(.glass).tint(Theme.accent)
+                .font(WebTheme.sans(14, .medium)).buttonStyle(.web(.outline)).tint(Theme.accent)
                 .disabled(validating || command.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
@@ -195,7 +195,7 @@ struct PiConfigSection: View {
                 Text(v.found
                      ? LocalizedStringKey(stringLiteral: [v.resolvedPath, v.version.map { "(\($0))" }].compactMap { $0 }.joined(separator: " "))
                      : "Command not found")
-                    .font(.caption).foregroundStyle(v.found ? Theme.textSecondary : Theme.danger)
+                    .font(WebTheme.sans(12)).foregroundStyle(v.found ? Theme.textSecondary : Theme.danger)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
@@ -274,9 +274,9 @@ struct PiConfigSection: View {
         EditorSection(title: "Auto-trust opened workspaces") {
             Toggle(isOn: Binding(get: { trustWorkspace }, set: { toggleTrust($0) })) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Auto-trust opened workspaces").font(.subheadline).foregroundStyle(Theme.textPrimary)
+                    Text("Auto-trust opened workspaces").font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
                     Text("When codeg connects pi to a folder, mark that folder trusted so pi loads the project’s local config and skills without a separate prompt.")
-                        .font(.caption).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
+                        .font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).fixedSize(horizontal: false, vertical: true)
                 }
             }
             .tint(Theme.accent)
@@ -292,7 +292,7 @@ struct PiConfigSection: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill")
                 .foregroundStyle(b.isError ? Theme.danger : Theme.accent)
-            Text(LocalizedStringKey(stringLiteral: b.text)).font(.caption)
+            Text(LocalizedStringKey(stringLiteral: b.text)).font(WebTheme.sans(12))
                 .foregroundStyle(b.isError ? Theme.danger : Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -313,9 +313,9 @@ struct PiConfigSection: View {
             .padding(.horizontal, 14).padding(.vertical, 5)
         }
         if prominent {
-            label.buttonStyle(.glassProminent).tint(Theme.accent).disabled(disabled)
+            label.buttonStyle(.web(.primary)).tint(Theme.accent).disabled(disabled)
         } else {
-            label.buttonStyle(.glass).tint(Theme.accent).disabled(disabled)
+            label.buttonStyle(.web(.outline)).tint(Theme.accent).disabled(disabled)
         }
     }
 
@@ -323,9 +323,9 @@ struct PiConfigSection: View {
     private func disclosure<C: View>(_ title: LocalizedStringKey, isOpen: Binding<Bool>, @ViewBuilder content: () -> C) -> some View {
         Button { withAnimation(.snappy(duration: 0.2)) { isOpen.wrappedValue.toggle() } } label: {
             HStack(spacing: 8) {
-                Text(title).font(.subheadline).foregroundStyle(Theme.textPrimary)
+                Text(title).font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
                     .rotationEffect(.degrees(isOpen.wrappedValue ? 90 : 0))
             }
@@ -338,7 +338,7 @@ struct PiConfigSection: View {
 
     private func caption(_ text: LocalizedStringKey, tint: Color = Theme.textTertiary) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(tint)
+            .font(WebTheme.sans(12)).foregroundStyle(tint)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.bottom, 12)

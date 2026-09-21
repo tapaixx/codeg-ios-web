@@ -369,7 +369,7 @@ struct ToolFieldInline: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(LocalizedStringKey(stringLiteral: label))
-                .font(.system(size: 11, weight: .semibold))
+                .font(WebTheme.sans(11, .semibold))
                 .foregroundStyle(Theme.textTertiary)
                 .fixedSize()
             Text(value)
@@ -389,7 +389,7 @@ struct ToolFieldBlock<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(LocalizedStringKey(stringLiteral: label))
-                .font(.system(size: 11, weight: .semibold))
+                .font(WebTheme.sans(11, .semibold))
                 .foregroundStyle(Theme.textTertiary)
             content
         }
@@ -537,7 +537,7 @@ struct FileBodyView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Text("FILE")
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(WebTheme.mono(10, .semibold))
                 .foregroundStyle(Theme.textTertiary)
             Spacer(minLength: 0)
             CopyButton(text: content)
@@ -569,7 +569,7 @@ struct FileBodyView: View {
             withAnimation(.snappy(duration: 0.2)) { expanded.toggle() }
         } label: {
             (expanded ? Text("Show less") : Text("Show \(lines.count - collapsedLineLimit) more lines"))
-                .font(.system(size: 10, weight: .semibold))
+                .font(WebTheme.sans(10, .semibold))
                 .foregroundStyle(Theme.accent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)

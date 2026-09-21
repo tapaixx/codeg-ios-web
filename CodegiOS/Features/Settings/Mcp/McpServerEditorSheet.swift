@@ -123,7 +123,7 @@ struct McpServerEditorSheet: View {
             specIsValidObject ? "Valid JSON object" : "Spec must be a JSON object",
             systemImage: specIsValidObject ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
         )
-        .font(.caption.weight(.medium))
+        .font(WebTheme.sans(12, .medium))
         .foregroundStyle(specIsValidObject ? Theme.accent : Theme.danger)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)

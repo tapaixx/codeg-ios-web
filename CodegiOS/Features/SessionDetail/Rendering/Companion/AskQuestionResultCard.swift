@@ -27,7 +27,7 @@ struct AskQuestionResultCard: View {
         if isError {
             shell(subtitle: nil) {
                 Text(verbatim: (vm.output ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.danger)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -82,12 +82,12 @@ struct AskQuestionResultCard: View {
             HStack(spacing: 8) {
                 (Text("Answered:").foregroundColor(Theme.textTertiary)
                     + Text(verbatim: " " + summary).foregroundColor(Theme.textSecondary))
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer(minLength: 4)
                 Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(WebTheme.sans(9, .bold))
                     .foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, 12).padding(.vertical, 8)
@@ -130,12 +130,12 @@ struct AskQuestionResultCard: View {
                         VStack(alignment: .leading, spacing: 4) {
                             if !a.question.isEmpty {
                                 Text(verbatim: a.question)
-                                    .font(.caption).foregroundStyle(Theme.textPrimary)
+                                    .font(WebTheme.sans(12)).foregroundStyle(Theme.textPrimary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             let labels = a.selected.filter { !$0.isEmpty }
                             if labels.isEmpty {
-                                Text("No selection").font(.caption).foregroundStyle(Theme.textTertiary)
+                                Text("No selection").font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                             } else {
                                 chips(labels)
                             }
@@ -154,10 +154,10 @@ struct AskQuestionResultCard: View {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Question")
-                        .font(.subheadline.weight(.semibold))
+                        .font(WebTheme.sans(14, .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     if let subtitle {
-                        Text(subtitle).font(.caption).foregroundStyle(Theme.textSecondary)
+                        Text(subtitle).font(WebTheme.sans(12)).foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Spacer(minLength: 4)
@@ -175,7 +175,7 @@ struct AskQuestionResultCard: View {
             HStack(spacing: 6) {
                 ForEach(Array(labels.enumerated()), id: \.offset) { _, label in
                     Text(verbatim: label)
-                        .font(.caption2.weight(.medium))
+                        .font(WebTheme.sans(11, .medium))
                         .foregroundStyle(Theme.textSecondary)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Color.primary.opacity(0.06), in: Capsule())

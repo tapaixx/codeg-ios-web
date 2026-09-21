@@ -367,7 +367,7 @@ struct GitStatusStrip: View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small).tint(Theme.accent)
             Text(model.busyTitle ?? "Working…")
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 0)
         }
@@ -383,18 +383,17 @@ struct GitStatusStrip: View {
     private func bannerRow(_ banner: GitBanner) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: icon(banner.kind))
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(tint(banner.kind))
             Text(banner.message)
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.textSecondary)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button {
                 model.banner = nil
             } label: {
-                Image(systemName: "xmark")
-                    .font(.caption2.weight(.bold))
+                LucideIcon(sf: "xmark", size: 11)
                     .foregroundStyle(Theme.textTertiary)
             }
             .buttonStyle(.plain)

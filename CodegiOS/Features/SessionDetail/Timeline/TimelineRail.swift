@@ -320,7 +320,7 @@ struct NodeMarker: View {
     private func chip(icon: String, tint: Color, filled: Bool = false, scale: CGFloat = 1) -> some View {
         let d = size * scale
         return Image(systemName: icon)
-            .font(.system(size: d * 0.42, weight: .semibold))
+            .font(WebTheme.sans(d * 0.42, .semibold))
             .foregroundStyle(filled ? Theme.onAccent : tint)
             .frame(width: d, height: d)
             .background(filled ? AnyShapeStyle(tint) : AnyShapeStyle(tint.opacity(0.16)), in: Circle())

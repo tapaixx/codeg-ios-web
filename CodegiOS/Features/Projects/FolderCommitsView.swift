@@ -105,7 +105,7 @@ struct FolderCommitsView: View {
                     }
                     if entries.count >= Self.limit {
                         Text("Showing the latest \(Self.limit) commits")
-                            .font(.caption2)
+                            .font(WebTheme.sans(11))
                             .foregroundStyle(Theme.textTertiary)
                             .frame(maxWidth: .infinity)
                             .padding(.top, 2)
@@ -179,27 +179,25 @@ private struct GitSyncHeader: View {
         // backdrop like a toolbar.
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.caption.weight(.semibold))
+                LucideIcon(sf: "arrow.triangle.branch", size: 12)
                     .foregroundStyle(Theme.textSecondary)
                 Text(pushInfo?.branch ?? "—")
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let remoteLabel {
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 9, weight: .semibold))
+                    LucideIcon(sf: "arrow.right", size: 9)
                         .foregroundStyle(Theme.textTertiary)
                     Text(remoteLabel)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 6)
                 if unpushedCount > 0 {
                     Label("\(unpushedCount) unpushed", systemImage: "arrow.up.circle.fill")
-                        .font(.caption2.weight(.bold))
+                        .font(WebTheme.sans(11, .bold))
                         .foregroundStyle(Theme.warning)
                         .labelStyle(.titleAndIcon)
                 }
@@ -224,8 +222,7 @@ private struct GitSyncHeader: View {
             Button { Task { await model.fetch() } } label: { Label("Fetch", systemImage: "arrow.down.circle") }
             Button(action: onRefresh) { Label("Refresh", systemImage: "arrow.clockwise") }
         } label: {
-            Image(systemName: "ellipsis")
-                .font(.subheadline.weight(.bold))
+            LucideIcon(sf: "ellipsis", size: 14)
                 .foregroundStyle(Theme.accent)
                 .frame(width: 44, height: 35)
                 .background(Capsule().fill(Theme.accent.opacity(0.12)))
@@ -262,13 +259,13 @@ private struct CommitRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(entry.subject)
-                        .font(.subheadline.weight(.medium))
+                        .font(WebTheme.sans(14, .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if let pushed = entry.pushed {
                         Image(systemName: pushed ? "cloud.fill" : "cloud")
-                            .font(.system(size: 10))
+                            .font(WebTheme.sans(10))
                             .foregroundStyle(pushed ? Theme.accent : Theme.textTertiary)
                             .help(pushed ? "Pushed" : "Not pushed")
                     }
@@ -276,13 +273,13 @@ private struct CommitRow: View {
 
                 HStack(spacing: 6) {
                     Text(entry.author)
-                        .font(.caption2)
+                        .font(WebTheme.sans(11))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                     if let date = entry.authoredDate {
-                        Text("·").font(.caption2).foregroundStyle(Theme.textTertiary)
+                        Text("·").font(WebTheme.sans(11)).foregroundStyle(Theme.textTertiary)
                         Text(RelativeTime.string(from: date))
-                            .font(.caption2)
+                            .font(WebTheme.sans(11))
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize()
                     }
@@ -313,12 +310,12 @@ struct ChangeCounts: View {
         HStack(spacing: 5) {
             if additions > 0 {
                 Text("+\(additions)")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(WebTheme.sans(10, .bold))
                     .foregroundStyle(DiffPalette.addText)
             }
             if deletions > 0 {
                 Text("−\(deletions)")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(WebTheme.sans(10, .bold))
                     .foregroundStyle(DiffPalette.delText)
             }
         }
@@ -364,36 +361,35 @@ struct CommitDetailView: View {
         GlassCard(cornerRadius: Theme.Radius.lg, padding: 14) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(entry.subject)
-                    .font(.headline)
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if !entry.body.isEmpty {
                     Text(entry.body)
-                        .font(.callout)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }
 
                 HStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle")
-                        .font(.caption)
+                    LucideIcon(sf: "person.crop.circle", size: 12)
                         .foregroundStyle(Theme.textTertiary)
                     Text(entry.author)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                     if let date = entry.authoredDate {
-                        Text("·").font(.caption).foregroundStyle(Theme.textTertiary)
+                        Text("·").font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                         Text(date.formatted(date: .abbreviated, time: .shortened))
-                            .font(.caption)
+                            .font(WebTheme.sans(12))
                             .foregroundStyle(Theme.textTertiary)
                     }
                     if let pushed = entry.pushed {
                         Spacer(minLength: 6)
                         Label(pushed ? "Pushed" : "Local", systemImage: pushed ? "cloud.fill" : "cloud")
-                            .font(.caption2.weight(.medium))
+                            .font(WebTheme.sans(11, .medium))
                             .foregroundStyle(pushed ? Theme.accent : Theme.textTertiary)
                     }
                 }
@@ -403,14 +399,12 @@ struct CommitDetailView: View {
                     UIPasteboard.general.string = entry.fullHash
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "number")
-                            .font(.system(size: 9, weight: .semibold))
+                        LucideIcon(sf: "number", size: 9)
                         Text(entry.fullHash)
                             .font(.mono(11))
                             .lineLimit(1)
                             .truncationMode(.middle)
-                        Image(systemName: "doc.on.doc")
-                            .font(.system(size: 9))
+                        LucideIcon(sf: "doc.on.doc", size: 9)
                     }
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 9)
@@ -425,7 +419,7 @@ struct CommitDetailView: View {
     private var summaryLine: some View {
         HStack(spacing: 8) {
             Text("\(entry.files.count) files changed")
-                .font(.subheadline.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 6)
             ChangeCounts(additions: entry.totalAdditions, deletions: entry.totalDeletions)
@@ -445,7 +439,7 @@ struct CommitDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 fileList
                 Text(error)
-                    .font(.caption2)
+                    .font(WebTheme.sans(11))
                     .foregroundStyle(Theme.textTertiary)
             }
         } else {
@@ -499,7 +493,7 @@ struct ChangeBadge: View {
 
     var body: some View {
         Text(change.letter)
-            .font(.system(size: 10, weight: .heavy, design: .monospaced))
+            .font(WebTheme.mono(10, .bold))
             .foregroundStyle(change.tint)
             .frame(width: 18, height: 18)
             .background(change.tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 5, style: .continuous))

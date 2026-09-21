@@ -1,7 +1,17 @@
 import SwiftUI
 
-/// A Liquid Glass surface for cards and rows, with a faint hairline for
-/// definition on the dark backdrop.
+/// The app's container and button primitives, re-cut to the web client's
+/// surfaces.
+///
+/// The names are unchanged — `GlassCard`, `PrimaryGlassButton`, … — because
+/// ~70 call sites use them and renaming would be churn with no visual payoff.
+/// What changed is what they draw: a Liquid Glass plate with a hairline and a
+/// floating shadow becomes `bg-card` with a 1px ring, and a `.glassProminent`
+/// button becomes the web's solid `bg-primary` pill. See
+/// `docs/web-style-port.md` for the full mapping.
+
+/// `src/components/ui/card.tsx` — `bg-card` + `rounded-2xl` +
+/// `ring-1 ring-foreground/10`. No glass, no shadow.
 struct GlassCard<Content: View>: View {
     var cornerRadius: CGFloat = Theme.Radius.lg
     var padding: CGFloat = 16
@@ -10,15 +20,13 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content()
             .padding(padding)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .hairlineBorder(cornerRadius)
+            .webCardSurface(cornerRadius: cornerRadius)
     }
 }
 
-/// A flat grouped-list surface — like ``GlassCard`` but with a plain fill and no
-/// Liquid Glass elevation, so the list sits flat on the backdrop with **no
-/// floating shadow** (a frosted glass card reads as a shadowed plate on the light
-/// near-white background). Used for the folder git tabs' Changes/Commits lists.
+/// A card without the ring — the web's `rounded-xl border bg-card` section, used
+/// where a group sits directly on the page rather than floating over content.
+/// Visually a half-step quieter than ``GlassCard``; both are flat.
 struct FlatCard<Content: View>: View {
     var cornerRadius: CGFloat = Theme.Radius.lg
     var padding: CGFloat = 0
@@ -27,15 +35,18 @@ struct FlatCard<Content: View>: View {
     var body: some View {
         content()
             .padding(padding)
-            .background(Theme.bgElevated, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(
+                WebTheme.card,
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
+            .webBorder(cornerRadius: cornerRadius)
     }
 }
 
-/// A compact accent capsule action button — the folder git tabs' Pull / Push /
-/// Commit pills. `prominent` fills solid accent (the primary action); otherwise a
-/// soft accent tint (the app's badge vocabulary). Deliberately flat (no glass, no
-/// shadow) so it reads as a deliberate button, not a stray background plate, on
-/// the light backdrop.
+/// A compact action pill — the folder git tabs' Pull / Push / Commit buttons.
+/// `prominent` is the web's `default` button variant (solid `bg-primary`);
+/// otherwise it's the `outline` variant, which is what the web uses for the
+/// toolbar actions alongside it.
 struct AccentPillButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
@@ -44,46 +55,20 @@ struct AccentPillButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 5) {
+            HStack(spacing: WebTheme.Space.onePointFive) {
                 if let systemImage {
-                    Image(systemName: systemImage).font(.footnote.weight(.bold))
+                    LucideIcon(sf: systemImage, size: WebTheme.Size.icon)
                 }
-                Text(title).font(.subheadline.weight(.semibold))
+                Text(title)
             }
-            .foregroundStyle(prominent ? Theme.onAccent : Theme.accent)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Capsule().fill(prominent ? Theme.accent : Theme.accent.opacity(0.12)))
-            .contentShape(Capsule())
         }
-        .buttonStyle(AccentPillButtonStyle())
+        .buttonStyle(.web(prominent ? .primary : .outline, .small))
     }
 }
 
-/// Press + disabled feedback for ``AccentPillButton``: a subtle scale/dim on press,
-/// and a clear dim when disabled — a custom-styled button doesn't grey out on
-/// `.disabled` the way the system styles do. Both this and its body view are
-/// `private` (matching access) so the body can read `\.isEnabled`.
-private struct AccentPillButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        AccentPillButtonBody(configuration: configuration)
-    }
-}
-
-private struct AccentPillButtonBody: View {
-    let configuration: ButtonStyleConfiguration
-    @Environment(\.isEnabled) private var isEnabled
-
-    var body: some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.4)
-            .animation(Theme.Motion.press, value: configuration.isPressed)
-    }
-}
-
-/// A tappable glass row used in lists (servers, sessions). Highlights with the
-/// accent tint when `isSelected`.
+/// A tappable row in a list (servers, sessions). The web's rows are pills that
+/// are transparent at rest and take a `bg-sidebar-primary/8` wash when selected
+/// — no border, no card, no glass.
 struct GlassRow<Content: View>: View {
     var isSelected: Bool = false
     var cornerRadius: CGFloat = Theme.Radius.md
@@ -91,60 +76,66 @@ struct GlassRow<Content: View>: View {
 
     var body: some View {
         content()
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .glassEffect(
-                isSelected ? .regular.tint(Theme.accent.opacity(0.22)) : .regular,
-                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            )
-            .hairlineBorder(cornerRadius, color: isSelected ? Theme.accent.opacity(0.45) : Theme.surfaceStroke)
+            .padding(.horizontal, WebTheme.Space.three)
+            .padding(.vertical, 9)
+            .background {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(WebTheme.sidebarPrimary.opacity(0.08))
+                }
+            }
     }
 }
 
-/// A subtle press-feedback style for list / option rows: a slight scale-down and
-/// dim on touch so a tap visibly registers (a `.plain` row gives no response at
-/// all, which reads as "did that work?"). Shared so every tappable row across the
-/// app responds identically. The scale is tiny (0.98) so it never clips in a List.
+/// Press feedback for list / option rows, so a tap visibly registers.
+///
+/// A dim rather than a background fill: these rows live inside cards of several
+/// different radii, and a fill drawn by the *style* can't know the row's shape,
+/// so it would square off a rounded card's corners on touch. Rows that want the
+/// web's `hover:bg-sidebar-accent` wash use ``WebRowStyle``, which owns its pill
+/// shape. The web's short 120ms beat is matched; the old scale-down is gone —
+/// nothing in the web UI scales on press.
 struct PressableRowStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .opacity(configuration.isPressed ? 0.72 : 1)
-            .animation(Theme.Motion.press, value: configuration.isPressed)
+            .opacity(configuration.isPressed ? 0.6 : 1)
+            .animation(WebTheme.Motion.press, value: configuration.isPressed)
             .contentShape(Rectangle())
     }
 }
 
-/// A small filter/selection chip.
+/// A small filter/selection chip. The web fills the selected chip with
+/// `bg-primary` and leaves the rest on `bg-muted`; `tint` / `onTint` are kept in
+/// the signature for the call sites that resolve colors explicitly (the
+/// Appearance preview, which renders inside a sheet the theme trait can't reach).
 struct FilterChip: View {
     let title: LocalizedStringKey
     var systemImage: String?
     let isSelected: Bool
-    /// Accent fill / on-accent text for the selected state. Default to the global
-    /// `Theme.accent` tokens (driven by the bridged accent trait); callers that
-    /// render where that trait can't reach — e.g. the Appearance preview, which
-    /// also appears inside the iPad Settings *sheet* — pass an explicitly resolved
-    /// color so the chip recolors regardless of presentation context.
-    var tint: Color = Theme.accent
-    var onTint: Color = Theme.onAccent
+    var tint: Color = WebTheme.primary
+    var onTint: Color = WebTheme.primaryForeground
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 5) {
+            HStack(spacing: WebTheme.Space.one) {
                 if let systemImage {
-                    Image(systemName: systemImage).font(.caption2.weight(.semibold))
+                    LucideIcon(sf: systemImage, size: WebTheme.Size.iconSmall)
                 }
-                Text(title).font(.subheadline.weight(.medium))
+                Text(title)
+                    .webText(.xs, .medium)
+                    .lineLimit(1)
             }
-            .foregroundStyle(isSelected ? onTint : Theme.textSecondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
+            .foregroundStyle(isSelected ? onTint : WebTheme.mutedForeground)
+            .padding(.horizontal, WebTheme.Space.two)
+            .frame(height: WebTheme.Size.controlTiny)
             .background {
-                Capsule().fill(isSelected ? tint : Color.primary.opacity(0.06))
+                Capsule(style: .continuous).fill(isSelected ? tint : WebTheme.muted)
             }
+            .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
+        .animation(WebTheme.Motion.chrome, value: isSelected)
     }
 }
 
@@ -152,14 +143,10 @@ extension View {
     /// Compact: render `title` as a big, left-aligned bar item on the SAME row as
     /// the trailing toolbar buttons (inline mode, so there's no separate
     /// large-title band above it). Regular (iPad split): keep the standard system
-    /// navigation title. Roots have no leading bar items, so the leading slot is
-    /// free for the title.
+    /// navigation title.
     @ViewBuilder
     func screenTitle(_ title: LocalizedStringKey, compact: Bool) -> some View {
         if compact {
-            // A large title that stays inline in the bar (doesn't collapse on
-            // scroll), so it sits on the same row as the trailing buttons with no
-            // separate large-title band above it.
             self
                 .navigationTitle(title)
                 .toolbarTitleDisplayMode(.inlineLarge)
@@ -169,86 +156,51 @@ extension View {
     }
 }
 
-/// Primary call-to-action, flat: a full-width solid-accent fill with no glass and
-/// no shadow. The glass sibling ``PrimaryGlassButton`` renders as a washed-out
-/// plate on the light near-white backdrop — and its disabled state nearly
-/// vanishes — so sheets presented there (the commit composer) use this instead.
-/// Disabled dims to a clearly-still-a-button 0.4, rather than disappearing.
+/// The full-width primary call-to-action at the foot of a sheet: the web's
+/// `default` button variant stretched, at the larger `h-10` size so it still
+/// reads as the screen's main action on a phone.
 struct FlatPrimaryButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
     var isLoading: Bool = false
-    var tint: Color = Theme.accent
-    var onTint: Color = Theme.onAccent
+    var tint: Color = WebTheme.primary
+    var onTint: Color = WebTheme.primaryForeground
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: WebTheme.Space.two) {
                 if isLoading {
                     ProgressView().controlSize(.small).tint(onTint)
                 } else if let systemImage {
-                    Image(systemName: systemImage).font(.subheadline.weight(.bold))
+                    LucideIcon(sf: systemImage, size: WebTheme.Size.icon)
                 }
-                Text(title).fontWeight(.semibold)
+                Text(title)
             }
-            .foregroundStyle(onTint)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(tint, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
         }
-        .buttonStyle(FlatPrimaryButtonStyle())
+        .buttonStyle(.web(.primary, .large, fullWidth: true, tint: tint, onTint: onTint))
         .disabled(isLoading)
     }
 }
 
-private struct FlatPrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        FlatPrimaryButtonBody(configuration: configuration)
-    }
-}
-
-private struct FlatPrimaryButtonBody: View {
-    let configuration: ButtonStyleConfiguration
-    @Environment(\.isEnabled) private var isEnabled
-
-    var body: some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.99 : 1)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
-            .animation(Theme.Motion.press, value: configuration.isPressed)
-    }
-}
-
-/// Primary call-to-action using prominent glass.
+/// Alias of ``FlatPrimaryButton`` — the app had a glass and a flat primary
+/// button; the web has one. Kept so both call-site names keep compiling.
 struct PrimaryGlassButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
     var isLoading: Bool = false
-    /// Prominent-glass tint / spinner color. Defaults to the global `Theme.accent`
-    /// tokens; callers rendering outside the bridged accent trait's reach (the
-    /// Appearance preview, which also shows inside the iPad Settings sheet) pass an
-    /// explicitly resolved color so the button recolors there too.
-    var tint: Color = Theme.accent
-    var onTint: Color = Theme.onAccent
+    var tint: Color = WebTheme.primary
+    var onTint: Color = WebTheme.primaryForeground
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                if isLoading {
-                    ProgressView().controlSize(.small).tint(onTint)
-                } else if let systemImage {
-                    Image(systemName: systemImage)
-                }
-                Text(title).fontWeight(.semibold)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
-        }
-        .buttonStyle(.glassProminent)
-        .tint(tint)
-        .disabled(isLoading)
+        FlatPrimaryButton(
+            title: title,
+            systemImage: systemImage,
+            isLoading: isLoading,
+            tint: tint,
+            onTint: onTint,
+            action: action
+        )
     }
 }

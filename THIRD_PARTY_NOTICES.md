@@ -41,3 +41,38 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Inter 4.1
+
+- Source: https://github.com/rsms/inter
+- License: SIL Open Font License 1.1
+
+Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
+
+Bundled as `CodegiOS/Resources/Fonts/Inter-{Regular,Medium,SemiBold,Bold}.ttf` —
+the interface typeface, matching the web client's default UI font. The full
+license text ships alongside the fonts as `Inter-LICENSE.txt`, as OFL §2
+requires.
+
+## JetBrains Mono 2.304
+
+- Source: https://github.com/JetBrains/JetBrainsMono
+- License: SIL Open Font License 1.1
+
+Copyright 2020 The JetBrains Mono Project Authors
+(https://github.com/JetBrains/JetBrainsMono)
+
+Bundled as `CodegiOS/Resources/Fonts/JetBrainsMono-{Regular,Medium,Bold}.ttf` —
+the code typeface, one of the web client's bundled monospace options. License
+text: `JetBrainsMono-OFL.txt`.
+
+## Lucide 1.47.0
+
+- Source: https://lucide.dev — https://github.com/lucide-icons/lucide
+- License: ISC
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Bundled as `CodegiOS/Resources/Fonts/lucide.ttf` (the `lucide-static` icon font)
+— the web client's icon library, so both clients draw identical glyphs. License
+text: `Lucide-LICENSE.txt`.

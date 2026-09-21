@@ -1,6 +1,12 @@
 import SwiftUI
 
-/// Centered empty-state with an optional primary action.
+/// Centered empty state with an optional primary action.
+///
+/// The web's empty states are quiet: a muted glyph, a `text-base` line, a
+/// `text-sm` explanation, and — if there's something to do — one outline button.
+/// The accent-filled 60pt tile this used to lead with was the app's own
+/// invention; on a flat surface it reads as a badge for a screen that has
+/// nothing in it.
 struct EmptyStateView: View {
     let icon: String
     let title: LocalizedStringKey
@@ -9,26 +15,23 @@ struct EmptyStateView: View {
     var action: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 14) {
-            // A branded accent tile (the shared DS treatment) rather than a bare
-            // grey glyph — an empty screen should feel like an invitation in the
-            // app's voice, not a placeholder.
-            AccentIconTile(symbol: icon, size: 60)
-                .padding(.bottom, 2)
+        VStack(spacing: WebTheme.Space.three) {
+            LucideIcon(sf: icon, size: 28)
+                .foregroundStyle(WebTheme.mutedForeground.opacity(0.7))
+                .padding(.bottom, WebTheme.Space.half)
             Text(title)
-                .font(.headline)
-                .foregroundStyle(Theme.textPrimary)
+                .webText(.base, .semibold)
+                .foregroundStyle(WebTheme.foreground)
             if let message {
                 Text(message)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.textSecondary)
+                    .webText(.sm)
+                    .foregroundStyle(WebTheme.mutedForeground)
                     .multilineTextAlignment(.center)
             }
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(.glass)
-                    .tint(Theme.accent)
-                    .padding(.top, 4)
+                    .buttonStyle(.web(.outline, .small))
+                    .padding(.top, WebTheme.Space.one)
             }
         }
         .frame(maxWidth: 320)
@@ -41,9 +44,13 @@ struct LoadingView: View {
     var label: LocalizedStringKey = "Loading…"
 
     var body: some View {
-        VStack(spacing: 12) {
-            ProgressView().controlSize(.large).tint(Theme.accent)
-            Text(label).font(.subheadline).foregroundStyle(Theme.textSecondary)
+        VStack(spacing: WebTheme.Space.three) {
+            ProgressView()
+                .controlSize(.regular)
+                .tint(WebTheme.mutedForeground)
+            Text(label)
+                .webText(.sm)
+                .foregroundStyle(WebTheme.mutedForeground)
         }
         .padding(32)
     }
@@ -51,43 +58,41 @@ struct LoadingView: View {
 
 /// A compact, dismissible error strip shown above a still-populated list when a
 /// refresh fails, so stale rows stay visible but the failure isn't silent.
+/// The web's destructive treatment: a `bg-destructive/10` fill with
+/// `text-destructive` content — never a solid red bar.
 struct RefreshErrorBanner: View {
     let message: String
     let retry: () -> Void
     let dismiss: () -> Void
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.caption)
-                .foregroundStyle(Theme.danger)
+        HStack(alignment: .firstTextBaseline, spacing: WebTheme.Space.two) {
+            LucideIcon(.triangleAlert, size: 14)
+                .foregroundStyle(WebTheme.destructive)
 
-            Text(message)
-                .font(.caption)
-                .foregroundStyle(Theme.textSecondary)
+            Text(verbatim: message)
+                .webText(.xs)
+                .foregroundStyle(WebTheme.foreground)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("Retry", action: retry)
-                .font(.caption.weight(.semibold))
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.accent)
+                .buttonStyle(.web(.ghost, .xs))
 
             Button(action: dismiss) {
-                Image(systemName: "xmark")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Theme.textTertiary)
+                LucideIcon(.x, size: 14)
+                    .foregroundStyle(WebTheme.mutedForeground)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.web(.ghost, .iconTiny))
             .accessibilityLabel("Dismiss")
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .glassEffect(
-            .regular.tint(Theme.danger.opacity(0.16)),
+        .padding(.horizontal, WebTheme.Space.three)
+        .padding(.vertical, WebTheme.Space.two)
+        .background(
+            WebTheme.destructiveSoft,
             in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous)
         )
-        .hairlineBorder(Theme.Radius.md, color: Theme.danger.opacity(0.35))
+        .webBorder(cornerRadius: Theme.Radius.md, color: WebTheme.destructive.opacity(0.25))
     }
 }
 
@@ -97,22 +102,20 @@ struct InlineErrorView: View {
     var retry: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32, weight: .light))
-                .foregroundStyle(Theme.danger)
+        VStack(spacing: WebTheme.Space.three) {
+            LucideIcon(.triangleAlert, size: 28)
+                .foregroundStyle(WebTheme.destructive)
             Text("Something went wrong")
-                .font(.headline)
-                .foregroundStyle(Theme.textPrimary)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(Theme.textSecondary)
+                .webText(.base, .semibold)
+                .foregroundStyle(WebTheme.foreground)
+            Text(verbatim: message)
+                .webText(.sm)
+                .foregroundStyle(WebTheme.mutedForeground)
                 .multilineTextAlignment(.center)
             if let retry {
                 Button("Try Again", action: retry)
-                    .buttonStyle(.glass)
-                    .tint(Theme.accent)
-                    .padding(.top, 4)
+                    .buttonStyle(.web(.outline, .small))
+                    .padding(.top, WebTheme.Space.one)
             }
         }
         .frame(maxWidth: 340)

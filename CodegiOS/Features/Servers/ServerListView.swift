@@ -221,13 +221,12 @@ private struct ServerRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(server.name)
-                            .font(.headline)
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.tail)
                         if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.caption)
+                            LucideIcon(sf: "checkmark.circle.fill", size: 12)
                                 .foregroundStyle(Theme.accent)
                                 .accessibilityLabel("Active server")
                         }
@@ -262,8 +261,7 @@ private struct ServerRow: View {
                 Label("Delete", systemImage: "trash")
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title3)
+            LucideIcon(sf: "ellipsis.circle", size: 16)
                 .foregroundStyle(Theme.textSecondary)
                 .frame(width: 30, height: 36)
                 .contentShape(.rect)

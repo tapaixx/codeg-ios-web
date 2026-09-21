@@ -119,13 +119,13 @@ struct CursorConfigSection: View {
                 .fill(statusTint)
                 .frame(width: 8, height: 8)
             Text(statusText)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.middle)
             if let membership = auth?.membership, !membership.isEmpty {
                 Text(membership)
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(Theme.accent.opacity(0.12), in: Capsule())
@@ -135,7 +135,7 @@ struct CursorConfigSection: View {
                 if authLoading {
                     ProgressView().controlSize(.small).tint(Theme.accent)
                 } else {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 14, weight: .semibold))
+                    LucideIcon(sf: "arrow.clockwise", size: 14)
                 }
             }
             .tint(Theme.accent)
@@ -170,7 +170,7 @@ struct CursorConfigSection: View {
     private var loginCommandRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Run this on the machine hosting codeg, then refresh:")
-                .font(.caption).foregroundStyle(Theme.textSecondary)
+                .font(WebTheme.sans(12)).foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
                 Text(CursorConfig.loginCommand(binaryPath: auth?.binaryPath))
@@ -186,7 +186,7 @@ struct CursorConfigSection: View {
                     copied = true
                 } label: {
                     Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(WebTheme.sans(13, .semibold))
                 }
                 .tint(Theme.accent)
             }
@@ -285,14 +285,14 @@ struct CursorConfigSection: View {
                         Button {
                             rules.wrappedValue.remove(at: index)
                         } label: {
-                            Image(systemName: "trash").font(.system(size: 13, weight: .semibold))
+                            LucideIcon(sf: "trash", size: 13)
                         }
                         .tint(Theme.danger)
                     }
                 }
                 Button { rules.wrappedValue.append("") } label: {
                     Label(addLabel, systemImage: "plus")
-                        .font(.caption.weight(.medium))
+                        .font(WebTheme.sans(12, .medium))
                 }
                 .tint(Theme.accent)
             }
@@ -328,7 +328,7 @@ struct CursorConfigSection: View {
 
     private func caption(_ text: LocalizedStringKey, tone: Color = Theme.textTertiary) -> some View {
         Text(text)
-            .font(.caption).foregroundStyle(tone)
+            .font(WebTheme.sans(12)).foregroundStyle(tone)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.bottom, 12)

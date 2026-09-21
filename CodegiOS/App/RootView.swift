@@ -33,14 +33,18 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
-        // Theme: the accent palette flows through a bridged UIKit trait so every
-        // `Theme.accent` recolors live; mode drives light/dark/system. The store
-        // is also placed in the environment so the Settings screen can edit it.
-        // Applied on the outermost Group so sheets and the activity `.task`
-        // inherit it. No `.id(...)` — accent/mode changes must not tear down
-        // live SessionDetail streams.
-        .environment(\.codegAccent, appearance.accent)
+        // Theme: the shadcn preset flows through a bridged UIKit trait so every
+        // `WebTheme` token recolors live; mode drives light/dark/system. The
+        // store is also placed in the environment so the Settings screen can edit
+        // it. Applied on the outermost Group so sheets and the activity `.task`
+        // inherit it. No `.id(...)` — theme/mode changes must not tear down live
+        // SessionDetail streams.
+        .environment(\.webTheme, appearance.themeColor)
         .environment(appearance)
+        // Catches a bundled face that iOS didn't register (a missing UIAppFonts
+        // entry) in DEBUG, instead of letting it fall back to the system font
+        // silently — the whole port hangs on Inter and lucide.ttf loading.
+        .task { LucideFont.verify() }
         // App display language: overriding `\.locale` re-resolves every
         // `LocalizedStringKey` live (no `.id(...)` teardown, so live streams
         // survive). `.system` hands back the device locale (a no-op override).

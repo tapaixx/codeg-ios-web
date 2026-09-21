@@ -36,7 +36,7 @@ struct PermissionRequestCard: View {
 
             if failed {
                 Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.danger)
             }
 
@@ -59,24 +59,24 @@ struct PermissionRequestCard: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: parsed.isPlan ? "list.bullet.clipboard" : "exclamationmark.shield.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(WebTheme.sans(16, .semibold))
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: parsed.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
                 Text(parsed.isPlan
                      ? "The agent wants to proceed with this plan."
                      : "The agent needs permission to continue.")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
             if !parsed.isPlan, !parsed.kind.isEmpty {
                 Text(verbatim: parsed.kind)
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
@@ -96,7 +96,7 @@ struct PermissionRequestCard: View {
                     CodeBlockView(code: command, language: "bash")
                     if let cwd = parsed.cwd {
                         Text(verbatim: "cwd: \(cwd)")
-                            .font(.caption2.monospaced())
+                            .font(WebTheme.mono(11))
                             .foregroundStyle(Theme.textTertiary)
                     }
                 }
@@ -133,13 +133,13 @@ struct PermissionRequestCard: View {
                             HStack(alignment: .top, spacing: 6) {
                                 if !item.tool.isEmpty {
                                     Text(verbatim: item.tool)
-                                        .font(.caption2.weight(.medium))
+                                        .font(WebTheme.sans(11, .medium))
                                         .foregroundStyle(Theme.textSecondary)
                                         .padding(.horizontal, 5).padding(.vertical, 1)
                                         .background(Color.primary.opacity(0.06), in: Capsule())
                                 }
                                 Text(verbatim: item.prompt)
-                                    .font(.subheadline)
+                                    .font(WebTheme.sans(14))
                                     .foregroundStyle(Theme.textPrimary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -149,8 +149,7 @@ struct PermissionRequestCard: View {
             }
 
             if let mode = parsed.modeTarget {
-                Label { Text("Target mode: \(mode)") } icon: { Image(systemName: "arrow.triangle.swap") }
-                    .font(.caption)
+                Label { Text("Target mode: \(mode)") } icon: { LucideIcon(sf: "arrow.triangle.swap", size: 12) }
                     .foregroundStyle(Theme.textSecondary)
             }
 
@@ -158,13 +157,13 @@ struct PermissionRequestCard: View {
                 section("Web", "globe") {
                     VStack(alignment: .leading, spacing: 4) {
                         if let url = parsed.url {
-                            Text(verbatim: url).font(.caption.monospaced()).foregroundStyle(Theme.textPrimary)
+                            Text(verbatim: url).font(WebTheme.mono(12)).foregroundStyle(Theme.textPrimary)
                         }
                         if let query = parsed.query {
-                            Text(verbatim: query).font(.subheadline).foregroundStyle(Theme.textPrimary)
+                            Text(verbatim: query).font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
                         }
                         if let prompt = parsed.prompt {
-                            Text(verbatim: prompt).font(.subheadline).foregroundStyle(Theme.textSecondary)
+                            Text(verbatim: prompt).font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -180,7 +179,7 @@ struct PermissionRequestCard: View {
     private func section<Content: View>(_ label: LocalizedStringKey, _ icon: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Label(label, systemImage: icon)
-                .font(.caption.weight(.semibold))
+                .font(WebTheme.sans(12, .semibold))
                 .foregroundStyle(Theme.textSecondary)
             content()
         }
@@ -199,7 +198,7 @@ struct PermissionRequestCard: View {
                         .tint(option.isReject ? Theme.textPrimary : Theme.onAccent)
                 }
                 Text(verbatim: option.name)
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
             }

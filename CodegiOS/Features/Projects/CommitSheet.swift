@@ -94,7 +94,7 @@ struct CommitSheet: View {
     private var selectionHeader: some View {
         HStack(spacing: 8) {
             Text("\(selected.count) of \(entries.count) selected")
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 8)
             Button(allSelected ? "Deselect All" : "Select All") {
@@ -104,7 +104,7 @@ struct CommitSheet: View {
                     selected = Set(entries.map(\.path))
                 }
             }
-            .font(.caption.weight(.semibold))
+            .font(WebTheme.sans(12, .semibold))
             .buttonStyle(.plain)
             .foregroundStyle(Theme.accent)
             .disabled(committing)
@@ -131,12 +131,12 @@ struct CommitSheet: View {
         } label: {
             HStack(spacing: 11) {
                 Image(systemName: selected.contains(entry.path) ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
+                    .font(WebTheme.sans(18))
                     .foregroundStyle(selected.contains(entry.path) ? Theme.accent : Theme.textTertiary)
                 ChangeBadge(change: entry.change)
                 VStack(alignment: .leading, spacing: 2) {
                     Text((entry.path as NSString).lastPathComponent)
-                        .font(.callout)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -169,7 +169,7 @@ struct CommitSheet: View {
         EditorSection(title: "Message", flat: true) {
             TextField("Describe your changes", text: $message, axis: .vertical)
                 .lineLimit(3...8)
-                .font(.body)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textPrimary)
                 .tint(Theme.accent)
                 .focused($messageFocused)
@@ -198,8 +198,8 @@ struct CommitSheet: View {
                 runCommit(andPush: true)
             } label: {
                 HStack(spacing: 5) {
-                    Image(systemName: "arrow.up").font(.caption.weight(.semibold))
-                    Text("Commit & Push").font(.subheadline.weight(.medium))
+                    LucideIcon(sf: "arrow.up", size: 12)
+                    Text("Commit & Push").font(WebTheme.sans(14, .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
@@ -270,11 +270,10 @@ private struct CommitErrorBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
+            LucideIcon(sf: "exclamationmark.triangle.fill", size: 14)
                 .foregroundStyle(Theme.danger)
             Text(message)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.danger)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

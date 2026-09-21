@@ -147,7 +147,7 @@ struct AgentDetailView: View {
                     AgentAvatar(agent: agent.agentType, size: 56)
                     VStack(alignment: .leading, spacing: 6) {
                         Text(agent.name)
-                            .font(.title2.weight(.semibold))
+                            .font(WebTheme.sans(18, .semibold))
                             .foregroundStyle(Theme.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                         AgentStatusPill(agent: agent)
@@ -157,19 +157,19 @@ struct AgentDetailView: View {
                 }
                 if !agent.description.isEmpty {
                     Text(agent.description)
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let path = agent.configFilePath, !path.isEmpty {
                     Label(path, systemImage: "doc.text")
-                        .font(.caption.monospaced())
+                        .font(WebTheme.mono(12))
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1).truncationMode(.middle)
                 }
                 if !agent.available {
                     Label("Not available on this server.", systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption.weight(.medium))
+                        .font(WebTheme.sans(12, .medium))
                         .foregroundStyle(Theme.danger)
                 }
             }
@@ -243,11 +243,11 @@ struct AgentDetailView: View {
                     // The status sentence (version prefix stripped) with its glyph.
                     HStack(alignment: .top, spacing: 9) {
                         Image(systemName: glyph.symbol)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(glyph.color)
                             .padding(.top, 1)
                         Text(parts.note)
-                            .font(.subheadline)
+                            .font(WebTheme.sans(14))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -272,11 +272,11 @@ struct AgentDetailView: View {
     private func versionStat(_ label: LocalizedStringKey, _ value: String, highlight: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label).textCase(.uppercase)
-                .font(.caption2.weight(.semibold))
+                .font(WebTheme.sans(11, .semibold))
                 .foregroundStyle(Theme.textTertiary)
                 .tracking(0.5)
             Text(value)
-                .font(.callout.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .monospaced()
                 .foregroundStyle(highlight ? Theme.accent : Theme.textPrimary)
         }
@@ -308,7 +308,7 @@ struct AgentDetailView: View {
                     Text(primary.label).fontWeight(.semibold)
                         .padding(.horizontal, 18).padding(.vertical, 5)
                 }
-                .buttonStyle(.glassProminent).tint(Theme.accent)
+                .buttonStyle(.web(.primary)).tint(Theme.accent)
                 .disabled(isInstalling || primary.disabled)
                 Spacer(minLength: 0)
                 if !secondary.isEmpty { versionMenu(secondary, iconOnly: true) }
@@ -328,13 +328,13 @@ struct AgentDetailView: View {
             }
         } label: {
             if iconOnly {
-                Image(systemName: "ellipsis").font(.body.weight(.semibold)).frame(width: 46, height: 34)
+                LucideIcon(sf: "ellipsis", size: 14).frame(width: 46, height: 34)
             } else {
                 Label("Manage", systemImage: "ellipsis.circle")
-                    .font(.subheadline.weight(.medium)).padding(.horizontal, 16).padding(.vertical, 7)
+                    .font(WebTheme.sans(14, .medium)).padding(.horizontal, 16).padding(.vertical, 7)
             }
         }
-        .buttonStyle(.glass).tint(iconOnly ? Theme.textSecondary : Theme.accent)
+        .buttonStyle(.web(.outline)).tint(iconOnly ? Theme.textSecondary : Theme.accent)
         .accessibilityLabel(iconOnly ? "More version actions" : "Manage version")
         .disabled(isInstalling)
     }
@@ -356,14 +356,14 @@ struct AgentDetailView: View {
                 if preflightLoading {
                     HStack(spacing: 9) {
                         ProgressView().controlSize(.small).tint(Theme.accent)
-                        Text("Checking…").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                        Text("Checking…").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 16).padding(.vertical, 14)
                 } else if let preflight {
                     if preflight.checks.isEmpty {
                         Text(preflight.passed ? "All checks passed." : "No checks reported.")
-                            .font(.subheadline).foregroundStyle(Theme.textSecondary)
+                            .font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16).padding(.vertical, 14)
                     }
@@ -376,7 +376,7 @@ struct AgentDetailView: View {
                 } else {
                     Button { Task { await loadPreflight(force: true) } } label: {
                         Text("Run Preflight")
-                            .font(.subheadline.weight(.medium)).foregroundStyle(Theme.accent)
+                            .font(WebTheme.sans(14, .medium)).foregroundStyle(Theme.accent)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                             .padding(.horizontal, 16).padding(.vertical, 14)
@@ -392,13 +392,13 @@ struct AgentDetailView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: glyph.symbol)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(WebTheme.sans(16, .semibold))
                     .foregroundStyle(glyph.color)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(check.label).font(.subheadline).foregroundStyle(Theme.textPrimary)
+                    Text(check.label).font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
                     if !check.message.isEmpty {
-                        Text(check.message).font(.caption).foregroundStyle(Theme.textTertiary)
+                        Text(check.message).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -423,7 +423,7 @@ struct AgentDetailView: View {
                 Text("Re-run checks")
                 Spacer(minLength: 0)
             }
-            .font(.subheadline.weight(.medium)).foregroundStyle(Theme.accent)
+            .font(WebTheme.sans(14, .medium)).foregroundStyle(Theme.accent)
             .contentShape(Rectangle())
             .padding(.horizontal, 16).padding(.vertical, 13)
         }
@@ -457,17 +457,15 @@ struct AgentDetailView: View {
                     withAnimation(.snappy(duration: 0.2)) { showNativeConfig.toggle() }
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "curlybraces")
-                            .font(.system(size: 15, weight: .semibold))
+                        LucideIcon(sf: "curlybraces", size: 15)
                             .foregroundStyle(Theme.accent)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Native config").font(.subheadline).foregroundStyle(Theme.textPrimary)
-                            Text(nativeConfigLabel).font(.caption.monospaced()).foregroundStyle(Theme.textTertiary)
+                            Text("Native config").font(WebTheme.sans(14)).foregroundStyle(Theme.textPrimary)
+                            Text(nativeConfigLabel).font(WebTheme.mono(12)).foregroundStyle(Theme.textTertiary)
                         }
                         Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
+                        LucideIcon(sf: "chevron.right", size: 12)
                             .foregroundStyle(Theme.textTertiary)
                             .rotationEffect(.degrees(showNativeConfig ? 90 : 0))
                     }
@@ -499,7 +497,7 @@ struct AgentDetailView: View {
         } label: {
             Label("Clear Binary Cache", systemImage: "trash").frame(maxWidth: .infinity).padding(.vertical, 4)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.web(.outline))
         .tint(Theme.danger)
         .disabled(isInstalling)
     }
@@ -641,9 +639,9 @@ private struct FlowFixButtons: View {
         HStack(spacing: 8) {
             ForEach(fixes) { fix in
                 Button { onTap(fix) } label: {
-                    Text(fix.label).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 5)
+                    Text(fix.label).font(WebTheme.sans(12, .medium)).padding(.horizontal, 10).padding(.vertical, 5)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.web(.outline))
                 .tint(Theme.accent)
                 .disabled(disabled)
             }

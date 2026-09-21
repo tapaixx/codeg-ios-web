@@ -60,7 +60,7 @@ struct QRScannerView: View {
 
             Spacer()
             Text("Scan Server QR")
-                .font(.headline)
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(.white)
             Spacer()
 
@@ -91,7 +91,7 @@ struct QRScannerView: View {
                 VStack(spacing: 18) {
                     ScanReticle()
                     Text("Align your codeg server's QR code within the frame.")
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                 }
@@ -118,13 +118,13 @@ struct QRScannerView: View {
     private func stateMessage(icon: String, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 44))
+                .font(WebTheme.sans(44))
                 .foregroundStyle(.white.opacity(0.85))
             Text(title)
-                .font(.title3.weight(.semibold))
+                .font(WebTheme.sans(16, .semibold))
                 .foregroundStyle(.white)
             Text(message)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
         }
@@ -134,7 +134,7 @@ struct QRScannerView: View {
     private func circleButton(systemName: String, tint: Color = .white, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.headline.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 40, height: 40)
                 .background(.black.opacity(0.4), in: Circle())

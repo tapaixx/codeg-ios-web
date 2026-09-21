@@ -13,7 +13,7 @@ struct SessionHeaderView: View {
             // Title + badges
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 (summary.trimmedTitle.map { Text(verbatim: $0) } ?? Text("Untitled session"))
-                    .font(.headline)
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
                 Spacer(minLength: 8)
@@ -51,9 +51,9 @@ private struct MetaChip: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 9, weight: .semibold))
+            Image(systemName: symbol).font(WebTheme.sans(9, .semibold))
             Text(text)
-                .font(mono ? .mono(11) : .caption2.weight(.medium))
+                .font(mono ? WebTheme.mono(11) : WebTheme.sans(11, .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -102,7 +102,7 @@ private struct UsageReadout: View {
         HStack(spacing: 10) {
             if let tokensLabel {
                 HStack(spacing: 4) {
-                    Image(systemName: "circle.hexagongrid.fill").font(.system(size: 9))
+                    LucideIcon(sf: "circle.hexagongrid.fill", size: 9)
                     Text(tokensLabel).font(.mono(11))
                 }
                 .foregroundStyle(Theme.textSecondary)

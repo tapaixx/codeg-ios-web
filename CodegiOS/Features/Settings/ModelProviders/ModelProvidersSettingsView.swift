@@ -90,7 +90,7 @@ struct ModelProvidersSettingsView: View {
                     }
                     ForEach(model.grouped, id: \.agent) { group in
                         Text("\(group.agent.displayName.uppercased()) · \(group.items.count)")
-                            .font(.caption.weight(.semibold))
+                            .font(WebTheme.sans(12, .semibold))
                             .foregroundStyle(Theme.textTertiary)
                             .tracking(0.5)
                             .padding(.top, 6)
@@ -120,12 +120,12 @@ struct ModelProvidersSettingsView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -170,24 +170,22 @@ private struct ModelProviderRow: View {
                 AgentAvatar(agent: provider.agentType, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(provider.name)
-                        .font(.headline)
+                        .font(WebTheme.sans(14, .semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     if let summary = modelSummary {
                         HStack(spacing: 5) {
-                            Image(systemName: "cpu")
-                                .font(.caption2)
+                            LucideIcon(sf: "cpu", size: 11)
                                 .foregroundStyle(Theme.accent)
                             Text(summary)
-                                .font(.subheadline)
+                                .font(WebTheme.sans(14))
                                 .foregroundStyle(Theme.textSecondary)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
                         }
                     }
                     HStack(spacing: 5) {
-                        Image(systemName: "network")
-                            .font(.caption2)
+                        LucideIcon(sf: "network", size: 11)
                             .foregroundStyle(Theme.textTertiary)
                         Text(provider.apiUrl)
                             .font(.mono(11))
@@ -197,8 +195,7 @@ private struct ModelProviderRow: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
             }
         }

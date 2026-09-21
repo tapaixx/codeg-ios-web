@@ -108,7 +108,7 @@ private struct SystemNodeBody: View {
 
     var body: some View {
         Text(SystemText.of(turn))
-            .font(.caption)
+            .font(WebTheme.sans(12))
             .foregroundStyle(Theme.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -212,8 +212,7 @@ private struct JumpToQuestionButton: View {
         Button {
             scroll(questionID, anchor: .top)
         } label: {
-            Image(systemName: "arrow.up")
-                .font(.system(size: 10, weight: .semibold))
+            LucideIcon(sf: "arrow.up", size: 10)
                 .foregroundStyle(Theme.textTertiary)
                 .contentShape(Rectangle())
         }
@@ -285,8 +284,7 @@ struct ContextCompactionDivider: View {
         HStack(spacing: 10) {
             hairline
             HStack(spacing: 5) {
-                Image(systemName: "archivebox")
-                    .font(.system(size: 11, weight: .medium))
+                LucideIcon(sf: "archivebox", size: 11)
                 label
                     .font(Theme.Typography.metaLabel)
             }
@@ -313,11 +311,10 @@ struct InlineTurnError: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 11, weight: .semibold))
+            LucideIcon(sf: "exclamationmark.triangle.fill", size: 11)
                 .foregroundStyle(Theme.danger)
             Text(message)
-                .font(.caption)
+                .font(WebTheme.sans(12))
                 .foregroundStyle(Theme.danger)
                 .fixedSize(horizontal: false, vertical: true)
         }

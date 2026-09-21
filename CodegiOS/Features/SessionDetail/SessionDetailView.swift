@@ -328,12 +328,10 @@ private struct JumpToLatestButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "arrow.down")
-                .font(.system(size: 15, weight: .bold))
+            LucideIcon(sf: "arrow.down", size: 15)
                 .foregroundStyle(Theme.accent)
                 .frame(width: 40, height: 40)
-                .glassEffect(.regular, in: Circle())
-                .hairlineBorder(20)
+                .webPopoverSurface(Circle())
                 // An explicit hit shape so the whole disc is tappable (and the
                 // tap can't slip past its edge into the transcript underneath).
                 .contentShape(Circle())
@@ -360,10 +358,9 @@ private struct NewSessionHeaderCard: View {
                 }
                 if let folder {
                     HStack(spacing: 4) {
-                        Image(systemName: "folder")
-                            .font(.system(size: 9, weight: .semibold))
+                        LucideIcon(sf: "folder", size: 9)
                         Text(folder.name)
-                            .font(.caption2.weight(.medium))
+                            .font(WebTheme.sans(11, .medium))
                             .lineLimit(1)
                     }
                     .foregroundStyle(Theme.textSecondary)
@@ -373,7 +370,7 @@ private struct NewSessionHeaderCard: View {
                 }
                 Spacer(minLength: 0)
                 (isStarting ? Text("Starting…") : Text("Tap the agent avatar above to set up"))
-                    .font(.caption2)
+                    .font(WebTheme.sans(11))
                     .foregroundStyle(Theme.textTertiary)
                     .lineLimit(1)
                     .layoutPriority(-1)
@@ -497,11 +494,11 @@ private struct DetailRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(label)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 8)
             value
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2)

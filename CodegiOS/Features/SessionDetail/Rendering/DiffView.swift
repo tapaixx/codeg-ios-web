@@ -117,7 +117,7 @@ private struct DiffFileView: View {
             withAnimation(.snappy(duration: 0.2)) { expanded.toggle() }
         } label: {
             (expanded ? Text("Show less") : Text("Show \(rowCount - collapsedRowLimit) more lines"))
-                .font(.system(size: 10, weight: .semibold))
+                .font(WebTheme.sans(10, .semibold))
                 .foregroundStyle(Theme.accent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 7)

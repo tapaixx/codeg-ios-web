@@ -1,10 +1,16 @@
-# Codeg for iOS
+# Codeg for iOS — web style
 
 A native, universal (iPhone + iPad) SwiftUI client for the [codeg](https://github.com/xintaofei/codeg)
 multi-agent coding server. Manage your codeg servers, browse their sessions, read
 the full transcript, and reply to the agent with the response streaming back in
-real time. Built for iOS 26 with Apple's **Liquid Glass** design language and a
-dark, developer-focused aesthetic.
+real time.
+
+This is a fork of [codeg-ios](https://github.com/tapaixx/codeg-ios) that trades
+its Liquid Glass look for the **codeg web client's design system**: the same
+shadcn theme presets (generated from the web's `globals.css`), Inter and
+JetBrains Mono, Lucide icons, and flat bordered surfaces — so the two clients
+read as one product. The port and its status are documented in
+[`docs/web-style-port.md`](docs/web-style-port.md).
 
 The app is a **pure API client** — all agent and conversation logic lives on the
 codeg backend; the app only calls its HTTP + WebSocket API.

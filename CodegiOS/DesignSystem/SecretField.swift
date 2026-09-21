@@ -30,9 +30,8 @@ struct SecretField: View {
                 Button {
                     revealed.toggle()
                 } label: {
-                    Image(systemName: revealed ? "eye.slash" : "eye")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.textTertiary)
+                    LucideIcon(revealed ? .eyeOff : .eye, size: WebTheme.Size.icon)
+                        .foregroundStyle(WebTheme.mutedForeground)
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)

@@ -154,12 +154,12 @@ private struct FileRow: View {
     var body: some View {
         HStack(spacing: FileRowMetrics.iconGap) {
             Image(systemName: icon)
-                .font(.system(size: 15))
+                .font(WebTheme.sans(15))
                 .foregroundStyle(iconTint)
                 .frame(width: FileRowMetrics.iconWidth)
 
             Text(item.name)
-                .font(.callout)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -167,7 +167,7 @@ private struct FileRow: View {
 
             if !item.isDir, let size = FolderPaths.size(item.size) {
                 Text(size)
-                    .font(.caption2)
+                    .font(WebTheme.sans(11))
                     .foregroundStyle(Theme.textTertiary)
                     .fixedSize()
             }
@@ -349,7 +349,7 @@ private struct FileContentView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: FileIcon.symbol(for: relativePath))
-                .font(.system(size: 11))
+                .font(WebTheme.sans(11))
                 .foregroundStyle(Theme.textTertiary)
             (relativePath.isEmpty ? Text("file") : Text(verbatim: relativePath))
                 .font(.mono(11))
@@ -358,7 +358,7 @@ private struct FileContentView: View {
                 .truncationMode(.head)
             Spacer(minLength: 6)
             Text("\(lines.count) lines")
-                .font(.system(size: 10, weight: .medium))
+                .font(WebTheme.sans(10, .medium))
                 .foregroundStyle(Theme.textTertiary)
         }
         .padding(.horizontal, 12)

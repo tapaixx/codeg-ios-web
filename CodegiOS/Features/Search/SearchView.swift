@@ -93,14 +93,14 @@ struct SearchView: View {
                 LazyVStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Recent")
-                            .font(.subheadline.weight(.semibold))
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(Theme.textSecondary)
                         Spacer()
                         Button("Clear") {
                             recents = []
                             RecentSearches.save([])
                         }
-                        .font(.caption.weight(.semibold))
+                        .font(WebTheme.sans(12, .semibold))
                         .buttonStyle(.plain)
                         .foregroundStyle(Theme.accent)
                     }
@@ -112,11 +112,10 @@ struct SearchView: View {
                             query = term
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "clock.arrow.circlepath")
-                                    .font(.caption)
+                                LucideIcon(sf: "clock.arrow.circlepath", size: 12)
                                     .foregroundStyle(Theme.textTertiary)
                                 Text(term)
-                                    .font(.body)
+                                    .font(WebTheme.sans(14))
                                     .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(1)
                                 Spacer(minLength: 0)

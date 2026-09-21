@@ -105,12 +105,12 @@ struct ComposeInsertSheet: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(title)
-                        .font(monospacedTitle ? .callout.monospaced().weight(.medium) : .callout.weight(.medium))
+                        .font(monospacedTitle ? WebTheme.mono(14, .medium) : WebTheme.sans(14, .medium))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     if let token, !token.isEmpty {
                         Text(token)
-                            .font(.caption2.monospaced())
+                            .font(WebTheme.mono(11))
                             .foregroundStyle(Theme.textTertiary)
                             .lineLimit(1)
                     }
@@ -118,7 +118,7 @@ struct ComposeInsertSheet: View {
                 }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -134,7 +134,7 @@ struct ComposeInsertSheet: View {
 
     private var noMatchesRow: some View {
         Text("No matches")
-            .font(.callout)
+            .font(WebTheme.sans(14))
             .foregroundStyle(Theme.textTertiary)
             .listRowBackground(Color.clear)
     }
@@ -145,10 +145,10 @@ struct ComposeInsertSheet: View {
         centered {
             VStack(spacing: 8) {
                 Image(systemName: source.systemImage)
-                    .font(.system(size: 28))
+                    .font(WebTheme.sans(28))
                     .foregroundStyle(Theme.textTertiary)
                 Text(emptyMessage)
-                    .font(.callout)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -169,12 +169,12 @@ struct ComposeInsertSheet: View {
         centered {
             VStack(spacing: 10) {
                 Text(message)
-                    .font(.callout)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.danger)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("Try Again") { model.load(source) }
-                    .buttonStyle(.glass)
+                    .buttonStyle(.web(.outline))
                     .tint(Theme.accent)
             }
             .padding(.horizontal, 32)

@@ -1,10 +1,16 @@
 import SwiftUI
 
-/// One conversation row in ``SessionListView`` / ``ActivityView``: a single,
-/// borderless line. The agent's brand avatar (with a small status-tinted dot)
-/// anchors the left, the title fills the middle, and the trailing edge shows a
-/// live pulse while running or a compact relative time otherwise. Selection
-/// (iPad) tints a subtle rounded background rather than drawing a card border.
+/// One conversation row in ``SessionListView`` / ``ActivityView``, ported from
+/// the web client's `sidebar-conversation-card.tsx`.
+///
+/// The web's row is the most distinctive thing in its UI, and it's all
+/// structure rather than decoration: a 31pt full-pill row, transparent at rest,
+/// with a 2pt vertical rail running its full height and the agent's 12pt brand
+/// glyph sitting *on* the rail, a status dot notched into the glyph's corner.
+/// Selected rows take a `bg-sidebar-primary/8` wash — no border, no card, no
+/// shadow. Consecutive rows' rails join into one continuous line, which is what
+/// makes a long session list read as a single thread instead of a stack of
+/// cards.
 struct SessionRow: View {
     let conversation: ConversationSummary
     let isSelected: Bool
@@ -21,10 +27,13 @@ struct SessionRow: View {
     /// `LazyVStack`, so a context menu is the toggle affordance.
     var onTogglePin: (() -> Void)?
 
+    /// The web's row height (`h-[1.9375rem]`).
+    private static let rowHeight: CGFloat = 31
+
     var body: some View {
         if let onTap {
             Button(action: onTap) { rowContent }
-                .buttonStyle(PressableRowStyle())
+                .buttonStyle(.webRow(selected: isSelected, height: Self.rowHeight))
                 .contextMenu {
                     if let onTogglePin {
                         Button(action: onTogglePin) {
@@ -37,57 +46,53 @@ struct SessionRow: View {
             // Display-only preview (inside SessionSectionCard): the whole card
             // owns the tap, so the row renders without a Button or context menu.
             rowContent
+                .frame(height: Self.rowHeight)
         }
     }
 
     /// The row's visual content, shared by the interactive (Button) rendering and
     /// the non-interactive preview rendering.
     private var rowContent: some View {
-        HStack(spacing: 11) {
-            avatar
+        HStack(spacing: WebTheme.Space.two) {
+            railMarker
 
             (conversation.trimmedTitle.map { Text(verbatim: $0) } ?? Text("Untitled session"))
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Theme.textPrimary)
+                .webText(.sm)
+                .foregroundStyle(WebTheme.sidebarForeground)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if let folderName {
-                Label(folderName, systemImage: "folder")
-                    .labelStyle(.titleAndIcon)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.textTertiary)
+                Text(verbatim: folderName)
+                    .webText(.xs)
+                    .foregroundStyle(WebTheme.mutedForeground)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                    .frame(maxWidth: 104, alignment: .trailing)
+                    .frame(maxWidth: 96, alignment: .trailing)
             }
 
             trailing
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 8)
+        .padding(.trailing, WebTheme.Space.two)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            if isSelected {
-                RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous)
-                    .fill(Theme.accent.opacity(0.18))
-            }
-        }
         .contentShape(Rectangle())
     }
 
-    /// Small agent avatar with a status-tinted dot badge in the corner (the live
-    /// state additionally shows a pulse on the trailing edge).
-    private var avatar: some View {
-        AgentAvatar(agent: conversation.agentType, size: 26)
-            .overlay(alignment: .bottomTrailing) {
-                Circle()
-                    .fill(conversation.status.tint)
-                    .frame(width: 8, height: 8)
-                    .overlay(Circle().strokeBorder(Theme.bg, lineWidth: 1.5))
-                    .offset(x: 1.5, y: 1.5)
-            }
+    /// The rail, the agent glyph on its axis, and the status dot notched into
+    /// the glyph's trailing-bottom corner — the web's exact construction.
+    private var railMarker: some View {
+        WebRailMarker(glyphSize: 12) {
+            AgentIcon(agent: conversation.agentType)
+                .overlay(alignment: .bottomTrailing) {
+                    WebStatusDot(
+                        color: conversation.status.tint,
+                        size: 5,
+                        ringColor: WebTheme.sidebar
+                    )
+                    .offset(x: 2, y: 2)
+                }
+        }
     }
 
     @ViewBuilder
@@ -96,8 +101,9 @@ struct SessionRow: View {
             LivePulse()
         } else {
             Text(RelativeTime.compact(from: conversation.updatedAt))
-                .font(.caption2)
-                .foregroundStyle(Theme.textTertiary)
+                .webText(.xs2)
+                .monospacedDigit()
+                .foregroundStyle(WebTheme.mutedForeground)
                 .fixedSize()
         }
     }

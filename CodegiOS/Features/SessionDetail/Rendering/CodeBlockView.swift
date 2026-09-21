@@ -21,9 +21,9 @@ struct CopyButton: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(WebTheme.sans(10, .semibold))
                 if let label {
-                    Text(copied ? "Copied" : label).font(.system(size: 10, weight: .semibold))
+                    Text(copied ? "Copied" : label).font(WebTheme.sans(10, .semibold))
                 }
             }
             .foregroundStyle(copied ? Theme.accent : Theme.textTertiary)
@@ -87,7 +87,7 @@ struct CodeBlockView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Text(LocalizedStringKey(stringLiteral: displayLanguage))
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(WebTheme.mono(10, .semibold))
                 .foregroundStyle(Theme.textTertiary)
             Spacer(minLength: 0)
             CopyButton(text: trimmedTrailing)
@@ -102,7 +102,7 @@ struct CodeBlockView: View {
             withAnimation(.snappy(duration: 0.2)) { expanded.toggle() }
         } label: {
             (expanded ? Text("Show less") : Text("Show \(lines.count - collapsedLineLimit) more lines"))
-                .font(.system(size: 10, weight: .semibold))
+                .font(WebTheme.sans(10, .semibold))
                 .foregroundStyle(Theme.accent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)

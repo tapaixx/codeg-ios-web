@@ -1,153 +1,169 @@
 import SwiftUI
 
-/// Circular agent avatar showing the per-agent brand icon.
+/// The agent's brand glyph, drawn plain.
+///
+/// The web's `AgentIcon` is the mark and nothing else — no tinted disc, no ring.
+/// Those were added here to give the glyph presence on a glass plate; on a flat
+/// surface they read as a second, competing shape, so they're gone. `size` still
+/// describes the outer box, so every call site's layout is unchanged.
 struct AgentAvatar: View {
     let agent: AgentType
     var size: CGFloat = 36
 
     var body: some View {
         AgentIcon(agent: agent)
-            .frame(width: size * 0.56, height: size * 0.56)
+            .frame(width: size * 0.72, height: size * 0.72)
             .frame(width: size, height: size)
-            .background(agent.accent.opacity(0.16), in: Circle())
-            .overlay(Circle().strokeBorder(agent.accent.opacity(0.32), lineWidth: 1))
     }
 }
 
-/// A circular, bordered section icon that mirrors ``AgentAvatar``'s shape so
-/// group headers (folder / Pinned / Running) visually rhyme with the agent
-/// avatars in their rows — and, at the same 26pt diameter, line the header title
-/// up with the row titles beneath it. The tint carries the folder color (or an
-/// accent) into both the fill and the stroke, replacing the old bare color dot.
+/// A section-header glyph (folder / Pinned / Running), matching the web's
+/// section headers: a `size-3.5` icon in `--muted-foreground`, no container.
 struct SectionBadgeIcon: View {
     let systemImage: String
-    var tint: Color = Theme.accent
+    var tint: Color = WebTheme.mutedForeground
     var size: CGFloat = 26
 
     var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: size * 0.44, weight: .semibold))
+        LucideIcon(sf: systemImage, size: 14)
             .foregroundStyle(tint)
             .frame(width: size, height: size)
-            .background(tint.opacity(0.16), in: Circle())
-            .overlay(Circle().strokeBorder(tint.opacity(0.32), lineWidth: 1))
     }
 }
 
-/// A folder's colored "workspace tile": a rounded square in the folder's color
-/// with a folder glyph. Squared off — unlike the circular ``SectionBadgeIcon`` /
-/// ``AgentAvatar`` — so it reads as a folder and stays visually distinct from the
-/// round agent avatars in the session lists. Size-scalable: the corner radius and
-/// glyph track `size`, so the same badge serves the Folders list rows (40) and the
-/// larger folder-detail hero. At `size: 40` it matches the original list tile
-/// (radius 12, glyph 17).
+/// A folder's identity badge: a small solid-color rounded square, the way the
+/// web marks folders across its tab bar and conversation cards
+/// (`src/components/ui/folder-badge.tsx`).
+///
+/// The web fills it with the folder's ramp color and puts the name's first
+/// character in white on top; ``init(folderID:name:size:)`` reproduces that
+/// exactly. The color-only initializer is kept for the call sites that have the
+/// folder's color but not its name, and substitutes a white folder glyph.
 struct FolderBadge: View {
-    let color: Color
-    var size: CGFloat = 40
+    private let fill: Color
+    private let label: String?
+    private let size: CGFloat
 
-    private var cornerRadius: CGFloat { size * 0.3 }
+    private var cornerRadius: CGFloat { max(4, size * 0.22) }
+
+    /// Color-only: a white folder glyph on the folder's color.
+    init(color: Color, size: CGFloat = 40) {
+        self.fill = color
+        self.label = nil
+        self.size = size
+    }
+
+    /// The web's badge: the folder's ramp color (derived from its id) with the
+    /// name's first letter or digit in white.
+    init(folderID: Int, name: String, size: CGFloat = 16) {
+        self.fill = WebFolderPalette.color(forFolderID: folderID)
+        self.label = WebFolderPalette.label(for: name)
+        self.size = size
+    }
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(color.opacity(0.18))
+            .fill(fill)
             .frame(width: size, height: size)
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(color.opacity(0.40), lineWidth: 1)
-            )
-            .overlay(
-                Image(systemName: "folder.fill")
-                    .font(.system(size: size * 0.425, weight: .semibold))
-                    .foregroundStyle(color)
-            )
+            .overlay {
+                if let label {
+                    Text(verbatim: label)
+                        .font(WebTheme.sans(size * 0.56, .medium))
+                        .foregroundStyle(.white)
+                } else {
+                    LucideIcon(.folder, size: size * 0.55)
+                        .foregroundStyle(.white)
+                }
+            }
     }
 }
 
-/// A rounded, accent-tinted tile holding an SF Symbol — the polished "app icon"
-/// treatment shared by the Experts and Skills list rows (and their detail heroes).
-/// Size-scalable: the corner radius and glyph track `size`, so one component
-/// serves the 40pt list tiles and the larger detail heroes. `tint` defaults to the
-/// app accent; pass another color to recolor the whole tile.
+/// A rounded tile holding an icon — the Experts and Skills list rows and their
+/// detail heroes. Now a `bg-muted` surface with a `--muted-foreground` glyph:
+/// the web reserves filled color tiles for identity (folders, agents), not for
+/// list decoration.
 struct AccentIconTile: View {
     let symbol: String
-    var tint: Color = Theme.accent
+    var tint: Color = WebTheme.mutedForeground
     var size: CGFloat = 40
 
-    private var cornerRadius: CGFloat { size * 0.27 }
+    private var cornerRadius: CGFloat { max(6, size * 0.25) }
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(tint.opacity(0.16))
+            .fill(WebTheme.muted)
             .frame(width: size, height: size)
-            .overlay(
-                Image(systemName: symbol)
-                    .font(.system(size: size * 0.44, weight: .semibold))
+            .overlay {
+                LucideIcon(sf: symbol, size: size * 0.45)
                     .foregroundStyle(tint)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(tint.opacity(0.16), lineWidth: 0.75)
-            )
+            }
     }
 }
 
-/// Small pill showing a group's item count, used in section headers.
+/// Small pill showing a group's item count, used in section headers — the
+/// sidebar's `bg-primary/10 text-primary` counter with mono digits so it doesn't
+/// jitter as it ticks.
 struct CountBadge: View {
     let count: Int
 
     var body: some View {
-        Text("\(count)")
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(Theme.textTertiary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(Color.primary.opacity(0.08)))
+        WebCountPill(count: count)
     }
 }
 
-/// Compact agent capsule (brand icon + short name).
+/// Compact agent capsule (brand glyph + short name) — the web's
+/// `agent-capsule.tsx`: a `bg-muted` pill whose label is muted, with the brand
+/// color carried by the glyph alone.
 struct AgentBadge: View {
     let agent: AgentType
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: WebTheme.Space.one) {
             AgentIcon(agent: agent).frame(width: 11, height: 11)
-            Text(agent.shortName).font(.caption2.weight(.semibold))
-                .foregroundStyle(agent.accent)
+            Text(verbatim: agent.shortName)
+                .webText(.xs, .medium)
+                .foregroundStyle(WebTheme.mutedForeground)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(agent.accent.opacity(0.14), in: Capsule())
+        .padding(.horizontal, WebTheme.Space.two)
+        .frame(height: WebTheme.Size.badge)
+        .background(WebTheme.muted, in: Capsule(style: .continuous))
     }
 }
 
-/// Conversation status capsule with a status dot.
+/// Conversation status capsule: the web's colored status dot plus a muted label.
+/// The dot carries the meaning; the text stays neutral, so a list of sessions
+/// doesn't turn into a row of colored words.
 struct StatusBadge: View {
     let status: ConversationStatus
 
     var body: some View {
-        HStack(spacing: 5) {
-            Circle().fill(status.tint).frame(width: 6, height: 6)
-            Text(status.label).font(.caption2.weight(.semibold))
+        HStack(spacing: WebTheme.Space.onePointFive) {
+            Circle()
+                .fill(status.tint)
+                .frame(width: 6, height: 6)
+            Text(status.label)
+                .webText(.xs, .medium)
+                .foregroundStyle(WebTheme.mutedForeground)
         }
-        .foregroundStyle(status.tint)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(status.tint.opacity(0.14), in: Capsule())
+        .padding(.horizontal, WebTheme.Space.two)
+        .frame(height: WebTheme.Size.badge)
+        .background(WebTheme.muted, in: Capsule(style: .continuous))
     }
 }
 
-/// A live "running" indicator with a pulsing dot.
+/// A live "running" indicator: the in-progress status dot with an expanding
+/// ring. The one piece of ambient motion the app keeps — it tells you an agent
+/// is working without you reading anything.
 struct LivePulse: View {
     @State private var animate = false
 
     var body: some View {
         Circle()
-            .fill(Theme.accent)
+            .fill(WebStatusPalette.inProgress)
             .frame(width: 8, height: 8)
             .overlay(
                 Circle()
-                    .stroke(Theme.accent, lineWidth: 2)
+                    .stroke(WebStatusPalette.inProgress, lineWidth: 2)
                     .scaleEffect(animate ? 2.2 : 1)
                     .opacity(animate ? 0 : 0.8)
             )

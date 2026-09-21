@@ -151,14 +151,14 @@ struct GitHubAccountEditorSheet: View {
             if let validation {
                 if validation.success {
                     Label(validation.username.map { "@\($0)" } ?? "Valid", systemImage: "checkmark.seal.fill")
-                        .font(.caption).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
+                        .font(WebTheme.sans(12)).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
                     if !validation.scopes.isEmpty {
                         Text("Scopes: \(validation.scopes.joined(separator: ", "))")
-                            .font(.caption2).foregroundStyle(Theme.textTertiary).lineLimit(2)
+                            .font(WebTheme.sans(11)).foregroundStyle(Theme.textTertiary).lineLimit(2)
                     }
                 } else {
                     Label(validation.message ?? "Invalid token", systemImage: "xmark.octagon.fill")
-                        .font(.caption).foregroundStyle(Theme.danger)
+                        .font(WebTheme.sans(12)).foregroundStyle(Theme.danger)
                 }
             }
         }

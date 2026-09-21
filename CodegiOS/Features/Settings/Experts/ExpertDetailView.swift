@@ -53,7 +53,7 @@ struct ExpertDetailView: View {
                     ExpertIconTile(icon: expert.metadata.icon, size: 56)
                     VStack(alignment: .leading, spacing: 7) {
                         Text(expert.metadata.localizedName)
-                            .font(.title2.weight(.semibold))
+                            .font(WebTheme.sans(18, .semibold))
                             .foregroundStyle(Theme.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                         CategoryPill(label: ExpertCategory.label(expert.metadata.category))
@@ -62,7 +62,7 @@ struct ExpertDetailView: View {
                 }
                 if let description = expert.metadata.localizedDescription, !description.isEmpty {
                     Text(description)
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -70,7 +70,7 @@ struct ExpertDetailView: View {
                 // The expert's identifier on its own line — selectable for copying,
                 // de-cluttered from the title row.
                 Label(expert.metadata.id, systemImage: "number")
-                    .font(.caption.monospaced())
+                    .font(WebTheme.mono(12))
                     .foregroundStyle(Theme.textTertiary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -85,7 +85,7 @@ struct ExpertDetailView: View {
         EditorSection(title: "Enable For", footer: "Links this expert into the selected agents' skills.") {
             if agents.isEmpty {
                 Text("No agents available on this server.")
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
@@ -100,7 +100,7 @@ struct ExpertDetailView: View {
                 HStack(spacing: 10) {
                     ProgressView().controlSize(.small).tint(Theme.accent)
                     Text("Loading status…")
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -130,11 +130,11 @@ struct ExpertDetailView: View {
                 .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(agent.displayName)
-                    .font(.body)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
                 if let caption {
                     Text(caption.text)
-                        .font(.caption2)
+                        .font(WebTheme.sans(11))
                         .foregroundStyle(caption.color)
                 }
             }
@@ -210,7 +210,7 @@ private struct CategoryPill: View {
 
     var body: some View {
         Text(label.uppercased())
-            .font(.system(size: 10, weight: .bold))
+            .font(WebTheme.sans(10, .bold))
             .tracking(0.4)
             .foregroundStyle(Theme.accent)
             .padding(.horizontal, 7)

@@ -125,11 +125,11 @@ struct GeneralSettingsView: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.body)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
                 if let hint {
                     Text(hint)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -162,7 +162,7 @@ struct GeneralSettingsView: View {
     private var depthControl: some View {
         HStack(spacing: 12) {
             Text("\(model.depthLimit)")
-                .font(.body.monospacedDigit().weight(.medium))
+                .font(WebTheme.sans(14, .medium).monospacedDigit())
                 .foregroundStyle(Theme.accent)
                 .frame(minWidth: 16, alignment: .trailing)
             Stepper(
@@ -197,10 +197,9 @@ struct GeneralSettingsView: View {
         } label: {
             HStack(spacing: 5) {
                 Text(LocalizedStringKey(stringLiteral: cacheLabel(model.completedCacheMaxMb)))
-                    .font(.body)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.accent)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2.weight(.semibold))
+                LucideIcon(sf: "chevron.up.chevron.down", size: 11)
                     .foregroundStyle(Theme.textTertiary)
             }
         }

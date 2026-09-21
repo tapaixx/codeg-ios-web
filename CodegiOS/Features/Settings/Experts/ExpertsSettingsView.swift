@@ -53,7 +53,7 @@ struct ExpertsSettingsView: View {
                     }
                     ForEach(model.grouped, id: \.category) { group in
                         Text("\(group.label.uppercased()) · \(group.items.count)")
-                            .font(.caption.weight(.semibold))
+                            .font(WebTheme.sans(12, .semibold))
                             .foregroundStyle(Theme.textTertiary)
                             .tracking(0.5)
                             .padding(.top, 6)
@@ -89,20 +89,19 @@ private struct ExpertRow: View {
                 ExpertIconTile(icon: expert.metadata.icon, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(expert.metadata.localizedName)
-                        .font(.headline)
+                        .font(WebTheme.sans(14, .semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     if let description = expert.metadata.localizedDescription, !description.isEmpty {
                         Text(description)
-                            .font(.subheadline)
+                            .font(WebTheme.sans(14))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
             }
         }

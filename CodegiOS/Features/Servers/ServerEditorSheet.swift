@@ -123,8 +123,7 @@ struct ServerEditorSheet: View {
                         focusedField = nil
                         showScanner = true
                     } label: {
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.title3)
+                        LucideIcon(sf: "qrcode.viewfinder", size: 16)
                             .foregroundStyle(Theme.accent)
                             .frame(width: 28, height: 28)
                             .contentShape(.rect)
@@ -170,7 +169,7 @@ struct ServerEditorSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
             }
-            .buttonStyle(.glass)
+            .buttonStyle(.web(.outline))
             .tint(Theme.accent)
             .disabled(model.isTesting || !model.canTest)
 
@@ -242,10 +241,10 @@ private struct TestResultRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
             Image(systemName: symbol)
-                .font(.subheadline.weight(.semibold))
+                .font(WebTheme.sans(14, .semibold))
                 .foregroundStyle(tint)
             text
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(tint)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)

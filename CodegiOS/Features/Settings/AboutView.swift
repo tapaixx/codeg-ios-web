@@ -71,8 +71,7 @@ struct AboutView: View {
     private var headerCard: some View {
         GlassCard {
             HStack(spacing: 14) {
-                Image(systemName: "chevron.left.forwardslash.chevron.right")
-                    .font(.system(size: 26, weight: .semibold))
+                LucideIcon(sf: "chevron.left.forwardslash.chevron.right", size: 26)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 60, height: 60)
                     .background(
@@ -81,10 +80,10 @@ struct AboutView: View {
                     )
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Codeg")
-                        .font(.title2.weight(.bold))
+                        .font(WebTheme.sans(18, .bold))
                         .foregroundStyle(Theme.textPrimary)
                     Text("codeg agent client for iOS")
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 0)
@@ -96,10 +95,10 @@ struct AboutView: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("About")
-                    .font(.headline)
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Browse and drive your codeg servers' agent sessions from iOS — watch tasks live, reply while the agent streams, and start new work in any folder.")
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -118,7 +117,7 @@ struct AboutView: View {
                 rowDivider
                 infoRow(label: "Server") {
                     Text(serverName ?? "—")
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -138,7 +137,7 @@ struct AboutView: View {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small).tint(Theme.textSecondary)
                 Text("Checking…")
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textSecondary)
             }
         case .loaded(let version):
@@ -147,7 +146,7 @@ struct AboutView: View {
                 .foregroundStyle(Theme.textPrimary)
         case .unavailable:
             Text("Unavailable")
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textSecondary)
         }
     }
@@ -157,7 +156,7 @@ struct AboutView: View {
     private func infoRow(label: String, @ViewBuilder value: () -> some View) -> some View {
         HStack {
             Text(label)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 12)
             value()

@@ -94,7 +94,7 @@ struct SkillEditorSheet: View {
                             if isLoadingContent {
                                 HStack(spacing: 8) {
                                     ProgressView().controlSize(.small).tint(Theme.accent)
-                                    Text("Loading…").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                                    Text("Loading…").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 16)
@@ -105,7 +105,7 @@ struct SkillEditorSheet: View {
                                 Group {
                                     if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                         Text("This skill has no content.")
-                                            .font(.subheadline)
+                                            .font(WebTheme.sans(14))
                                             .foregroundStyle(Theme.textTertiary)
                                     } else {
                                         MarkdownContent(raw: content)

@@ -102,13 +102,18 @@ enum ConversationStatus: String, Codable, Hashable, Sendable {
         }
     }
 
+    /// The status dot's color, taken from the web client's `STATUS_COLORS`
+    /// (src/lib/types.ts) so a session that reads "running" on the desktop reads
+    /// the same amber here. Note the web's mapping is not the intuitive one —
+    /// in-progress is yellow and *cancelled* is the red — and matching it matters
+    /// more than picking nicer hues.
     var tint: Color {
         switch self {
-        case .inProgress: return Color(red: 0.42, green: 0.78, blue: 0.95)
-        case .pendingReview: return Theme.warning
-        case .completed: return Color(red: 0.52, green: 0.82, blue: 0.56)
-        case .cancelled: return Color.secondary
-        case .other: return Color.secondary
+        case .inProgress: return WebStatusPalette.inProgress    // yellow-400
+        case .pendingReview: return WebStatusPalette.pendingReview // blue-500
+        case .completed: return WebStatusPalette.completed      // green-500
+        case .cancelled: return WebStatusPalette.cancelled      // red-500
+        case .other: return WebStatusPalette.unknown
         }
     }
 

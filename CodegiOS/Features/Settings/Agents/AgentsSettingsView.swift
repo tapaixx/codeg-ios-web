@@ -83,12 +83,12 @@ struct AgentsSettingsView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -118,22 +118,21 @@ private struct AgentRow: View {
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 7) {
                                 Text(agent.name)
-                                    .font(.headline)
+                                    .font(WebTheme.sans(14, .semibold))
                                     .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(1)
                                 AgentStatusPill(agent: agent)
                             }
                             if !agent.description.isEmpty {
                                 Text(agent.description)
-                                    .font(.subheadline)
+                                    .font(WebTheme.sans(14))
                                     .foregroundStyle(Theme.textSecondary)
                                     .lineLimit(2)
                                     .multilineTextAlignment(.leading)
                             }
                         }
                         Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
+                        LucideIcon(sf: "chevron.right", size: 12)
                             .foregroundStyle(Theme.textTertiary)
                     }
                     .contentShape(Rectangle())
@@ -175,7 +174,7 @@ struct AgentStatusPill: View {
 
     var body: some View {
         Text(label)
-            .font(.caption2.weight(.semibold))
+            .font(WebTheme.sans(11, .semibold))
             .foregroundStyle(tint)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)

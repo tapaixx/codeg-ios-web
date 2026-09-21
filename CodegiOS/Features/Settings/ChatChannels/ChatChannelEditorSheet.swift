@@ -208,7 +208,7 @@ struct ChatChannelEditorSheet: View {
                 .textInputAutocapitalization(.never)
             if Self.normalizedObjectJSON(rawText) == nil {
                 Text("Must be a JSON object.")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(Theme.danger)
             }
         }
@@ -236,7 +236,7 @@ struct ChatChannelEditorSheet: View {
                 Text("No token needed here.").foregroundStyle(Theme.textSecondary)
                 Spacer(minLength: 0)
             }
-            .font(.subheadline)
+            .font(WebTheme.sans(14))
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
         }

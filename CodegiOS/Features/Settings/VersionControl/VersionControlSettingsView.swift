@@ -118,7 +118,7 @@ struct VersionControlSettingsView: View {
             }
             if let test = model.testResult {
                 Text(test.installed ? "Found git \(test.version.map { "v\($0)" } ?? "") at that path." : "No git found at that path.")
-                    .font(.caption)
+                    .font(WebTheme.sans(12))
                     .foregroundStyle(test.installed ? Color(red: 0.30, green: 0.78, blue: 0.38) : Theme.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.bottom, 6)
@@ -131,10 +131,10 @@ struct VersionControlSettingsView: View {
                         Text("Test")
                     }
                 }
-                .buttonStyle(.glass).tint(Theme.accent)
+                .buttonStyle(.web(.outline)).tint(Theme.accent)
                 .disabled(model.testing || model.customPath.trimmingCharacters(in: .whitespaces).isEmpty)
                 Button("Save Path") { Task { await model.saveCustomPath() } }
-                    .buttonStyle(.glassProminent).tint(Theme.accent)
+                    .buttonStyle(.web(.primary)).tint(Theme.accent)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 16).padding(.vertical, 11)
@@ -146,7 +146,7 @@ struct VersionControlSettingsView: View {
         EditorSection(title: "GitHub Accounts") {
             if model.accounts.isEmpty {
                 Text("No accounts. Add one to authenticate clones and pushes.")
-                    .font(.subheadline).foregroundStyle(Theme.textTertiary)
+                    .font(WebTheme.sans(14)).foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.vertical, 13)
             } else {
@@ -178,11 +178,11 @@ struct VersionControlSettingsView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16).padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24).padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .task(id: toast) {
@@ -208,13 +208,13 @@ private struct AccountRow: View {
             .overlay(Circle().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("@\(account.username)").font(.headline).foregroundStyle(Theme.textPrimary).lineLimit(1)
-                Text(account.host).font(.caption).foregroundStyle(Theme.textTertiary).lineLimit(1)
+                Text("@\(account.username)").font(WebTheme.sans(14, .semibold)).foregroundStyle(Theme.textPrimary).lineLimit(1)
+                Text(account.host).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).lineLimit(1)
             }
             Spacer(minLength: 8)
             if account.isDefault {
                 Text("DEFAULT")
-                    .font(.caption2.weight(.bold))
+                    .font(WebTheme.sans(11, .bold))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 7).padding(.vertical, 3)
                     .background(Theme.accent.opacity(0.16), in: Capsule())

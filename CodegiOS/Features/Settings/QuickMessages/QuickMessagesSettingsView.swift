@@ -117,11 +117,11 @@ private struct QuickMessageRow: View {
         GlassCard(cornerRadius: Theme.Radius.md, padding: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(message.title.isEmpty ? "Untitled" : message.title)
-                    .font(.headline)
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Text(message.content)
-                    .font(.subheadline)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)

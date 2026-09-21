@@ -101,7 +101,7 @@ struct CloneRepoView: View {
                     } label: {
                         Image(systemName: "folder")
                     }
-                    .buttonStyle(.glass)
+                    .buttonStyle(.web(.outline))
                     .tint(Theme.accent)
                     .disabled(cloning)
                     .accessibilityLabel("Browse")
@@ -211,11 +211,10 @@ private struct ErrorBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
+            LucideIcon(sf: "exclamationmark.triangle.fill", size: 14)
                 .foregroundStyle(Theme.danger)
             Text(message)
-                .font(.subheadline)
+                .font(WebTheme.sans(14))
                 .foregroundStyle(Theme.danger)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

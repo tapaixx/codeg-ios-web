@@ -198,10 +198,10 @@ private struct ChangesSummary: View {
                 ForEach(Array(breakdown.enumerated()), id: \.offset) { _, item in
                     HStack(spacing: 3) {
                         Text(item.change.letter)
-                            .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                            .font(WebTheme.mono(10, .bold))
                             .foregroundStyle(item.change.tint)
                         Text("\(item.count)")
-                            .font(.caption2.weight(.semibold))
+                            .font(WebTheme.sans(11, .semibold))
                             .foregroundStyle(Theme.textSecondary)
                     }
                     .fixedSize()
@@ -261,7 +261,7 @@ private struct ChangeRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(fileName)
-                    .font(.callout)
+                    .font(WebTheme.sans(14))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -286,8 +286,7 @@ private struct ChangeRow: View {
             // word label is dropped — it only crowded the row and the trailing menu.
             // A chevron signals the row opens the file's diff / preview. Decorative
             // — the whole row is one NavigationLink, so hide it from VoiceOver.
-            Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
+            LucideIcon(sf: "chevron.right", size: 11)
                 .foregroundStyle(Theme.textTertiary)
                 .accessibilityHidden(true)
         }
@@ -298,8 +297,7 @@ private struct ChangeRow: View {
         Menu {
             menuItems
         } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.body)
+            LucideIcon(sf: "ellipsis.circle", size: 14)
                 .foregroundStyle(Theme.textTertiary)
                 .frame(width: 30, height: 30)
                 .contentShape(Rectangle())

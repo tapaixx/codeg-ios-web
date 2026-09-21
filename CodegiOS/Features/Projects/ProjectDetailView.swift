@@ -194,7 +194,7 @@ private struct FolderHeader: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(folder.name)
-                        .font(.title2.weight(.semibold))
+                        .font(WebTheme.sans(18, .semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -241,13 +241,13 @@ private struct FolderHeader: View {
                 HStack(spacing: 4) {
                     LivePulse()
                     Text("\(runningCount)")
-                        .font(.caption.weight(.bold))
+                        .font(WebTheme.sans(12, .bold))
                         .foregroundStyle(Theme.accent)
                 }
             }
             if sessionCount > 0 {
                 Text("\(sessionCount) sessions")
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.textTertiary)
             }
         }
@@ -261,9 +261,9 @@ private struct FolderHeader: View {
 
     private func chip(symbol: String, text: String) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 9, weight: .semibold))
+            Image(systemName: symbol).font(WebTheme.sans(9, .semibold))
             Text(text)
-                .font(.caption2.weight(.medium))
+                .font(WebTheme.sans(11, .medium))
                 .lineLimit(1)
                 .truncationMode(.tail)
         }

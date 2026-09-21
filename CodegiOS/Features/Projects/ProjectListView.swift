@@ -185,7 +185,7 @@ private struct ProjectRow: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(folder.name)
-                            .font(.headline)
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
 
@@ -210,8 +210,7 @@ private struct ProjectRow: View {
 
                     trailingStatus
 
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
+                    LucideIcon(sf: "chevron.right", size: 12)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -225,7 +224,7 @@ private struct ProjectRow: View {
             HStack(spacing: 4) {
                 LivePulse()
                 Text("\(runningCount)")
-                    .font(.caption.weight(.bold))
+                    .font(WebTheme.sans(12, .bold))
                     .foregroundStyle(Theme.accent)
             }
             .padding(.horizontal, 8)
@@ -234,7 +233,7 @@ private struct ProjectRow: View {
             .fixedSize()
         } else {
             Text(RelativeTime.compact(from: folder.lastOpenedAt))
-                .font(.caption2)
+                .font(WebTheme.sans(11))
                 .foregroundStyle(Theme.textTertiary)
                 .fixedSize()
         }
@@ -251,8 +250,7 @@ private struct BranchPill: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 9, weight: .semibold))
+            LucideIcon(sf: "arrow.triangle.branch", size: 9)
             Text(branch)
                 .font(.mono(10))
                 .lineLimit(1)

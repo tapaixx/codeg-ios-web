@@ -120,7 +120,7 @@ struct SettingsView: View {
                 title: "Appearance",
                 // Compose from the localized enum keys via `Text` interpolation so
                 // each piece re-resolves live with the app language.
-                detail: "\(Text(appearance.mode.titleKey)) · \(Text(appearance.accent.titleKey))"
+                detail: "\(Text(appearance.mode.titleKey)) · \(Text(appearance.themeColor.titleKey))"
             )
         }
         .buttonStyle(.plain)

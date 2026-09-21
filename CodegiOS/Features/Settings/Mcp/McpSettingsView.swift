@@ -129,17 +129,15 @@ private struct McpServerRow: View {
         GlassCard(cornerRadius: Theme.Radius.md, padding: 14) {
             VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 9) {
-                    Image(systemName: "puzzlepiece.extension.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                    LucideIcon(sf: "puzzlepiece.extension.fill", size: 15)
                         .foregroundStyle(Theme.accent)
                     Text(server.id)
-                        .font(.headline)
+                        .font(WebTheme.sans(14, .semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     TransportBadge(label: server.transportLabel)
                     Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
+                    LucideIcon(sf: "chevron.right", size: 12)
                         .foregroundStyle(Theme.textTertiary)
                 }
 
@@ -152,7 +150,7 @@ private struct McpServerRow: View {
 
                 if server.apps.isEmpty {
                     Label("Not assigned to any app", systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.danger.opacity(0.9))
                 } else {
                     FlowChips(labels: server.apps.map(\.displayName))
@@ -169,7 +167,7 @@ private struct TransportBadge: View {
 
     var body: some View {
         Text(label.uppercased())
-            .font(.system(size: 10, weight: .bold))
+            .font(WebTheme.sans(10, .bold))
             .tracking(0.4)
             .foregroundStyle(Theme.accent)
             .padding(.horizontal, 7)
@@ -186,7 +184,7 @@ private struct FlowChips: View {
         HStack(spacing: 6) {
             ForEach(labels.prefix(4), id: \.self) { label in
                 Text(label)
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -194,7 +192,7 @@ private struct FlowChips: View {
             }
             if labels.count > 4 {
                 Text("+\(labels.count - 4)")
-                    .font(.caption2.weight(.medium))
+                    .font(WebTheme.sans(11, .medium))
                     .foregroundStyle(Theme.textTertiary)
             }
         }

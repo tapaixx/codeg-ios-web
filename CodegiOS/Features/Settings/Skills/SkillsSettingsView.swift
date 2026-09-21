@@ -154,7 +154,7 @@ struct SkillsSettingsView: View {
                     // Interpolate a localized `Text` (not a raw String) so the scope
                     // word translates; the format key becomes "%@ · %lld".
                     Text("\(group.scope == .global ? Text("GLOBAL") : Text("PROJECT")) · \(group.items.count)")
-                        .font(.caption.weight(.semibold))
+                        .font(WebTheme.sans(12, .semibold))
                         .foregroundStyle(Theme.textTertiary)
                         .tracking(0.5)
                         .padding(.top, 6)
@@ -222,22 +222,21 @@ private struct SkillRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 7) {
                         Text(skill.name.isEmpty ? skill.id : skill.name)
-                            .font(.headline)
+                            .font(WebTheme.sans(14, .semibold))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                         if skill.readOnly { ReadOnlyBadge() }
                     }
                     if let description = skill.description, !description.isEmpty {
                         Text(description)
-                            .font(.subheadline)
+                            .font(WebTheme.sans(14))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                LucideIcon(sf: "chevron.right", size: 12)
                     .foregroundStyle(Theme.textTertiary)
             }
         }
@@ -249,8 +248,8 @@ private struct SkillRow: View {
 private struct ReadOnlyBadge: View {
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold))
-            Text("READ-ONLY").font(.caption2.weight(.bold)).tracking(0.3)
+            LucideIcon(sf: "lock.fill", size: 8)
+            Text("READ-ONLY").font(WebTheme.sans(11, .bold)).tracking(0.3)
         }
         .foregroundStyle(Theme.textTertiary)
         .padding(.horizontal, 6)
@@ -305,13 +304,12 @@ private struct AgentSelectorPill: View {
                 AgentIcon(agent: agent)
                     .frame(width: 18, height: 18)
                 Text(agent.displayName)
-                    .font(.subheadline.weight(.semibold))
+                    .font(WebTheme.sans(14, .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
             }
             if showsChevron {
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2.weight(.bold))
+                LucideIcon(sf: "chevron.up.chevron.down", size: 11)
                     .foregroundStyle(Theme.accent)
             }
         }

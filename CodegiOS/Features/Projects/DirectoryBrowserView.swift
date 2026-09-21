@@ -57,10 +57,9 @@ struct DirectoryBrowserView: View {
     private var pathBar: some View {
         HStack(spacing: 10) {
             Button { Task { await goUp() } } label: {
-                Image(systemName: "chevron.up")
-                    .font(.body.weight(.semibold))
+                LucideIcon(sf: "chevron.up", size: 14)
             }
-            .buttonStyle(.glass)
+            .buttonStyle(.web(.outline))
             .tint(Theme.accent)
             .disabled(isRoot || isLoading)
             .accessibilityLabel("Up")
@@ -111,8 +110,7 @@ struct DirectoryBrowserView: View {
                                     .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(1)
                                 Spacer(minLength: 8)
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.semibold))
+                                LucideIcon(sf: "chevron.right", size: 12)
                                     .foregroundStyle(entry.hasChildren ? Theme.textTertiary : .clear)
                             }
                         }

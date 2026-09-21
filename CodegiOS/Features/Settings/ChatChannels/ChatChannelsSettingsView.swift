@@ -131,7 +131,7 @@ struct ChatChannelsSettingsView: View {
     private var generalSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("GENERAL")
-                .font(.caption.weight(.semibold))
+                .font(WebTheme.sans(12, .semibold))
                 .foregroundStyle(Theme.textTertiary)
                 .tracking(0.5)
                 .padding(.leading, 4)
@@ -144,22 +144,20 @@ struct ChatChannelsSettingsView: View {
                             .fill(Theme.accentDim)
                             .frame(width: 40, height: 40)
                             .overlay(
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.system(size: 18, weight: .semibold))
+                                LucideIcon(sf: "slider.horizontal.3", size: 18)
                                     .foregroundStyle(Theme.accent)
                             )
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Message Settings")
-                                .font(.headline)
+                                .font(WebTheme.sans(14, .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                             Text("Command prefix, language, events, webhooks")
-                                .font(.subheadline)
+                                .font(WebTheme.sans(14))
                                 .foregroundStyle(Theme.textSecondary)
                                 .lineLimit(1)
                         }
                         Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
+                        LucideIcon(sf: "chevron.right", size: 12)
                             .foregroundStyle(Theme.textTertiary)
                     }
                     .contentShape(Rectangle())
@@ -174,12 +172,12 @@ struct ChatChannelsSettingsView: View {
     private var toastView: some View {
         if let toast = model.toast {
             Text(toast)
-                .font(.caption.weight(.medium))
+                .font(WebTheme.sans(12, .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
-                .glassEffect(.regular.tint(Theme.accent.opacity(0.18)), in: Capsule())
+                .webPopoverSurface(Capsule(style: .continuous))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -213,33 +211,31 @@ private struct ChannelRow: View {
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 7) {
                                 Text(channel.name)
-                                    .font(.headline)
+                                    .font(WebTheme.sans(14, .semibold))
                                     .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(1)
                                 ChannelStatusPill(status: status)
                             }
                             if !configSummary.isEmpty {
                                 Text(configSummary)
-                                    .font(.subheadline)
+                                    .font(WebTheme.sans(14))
                                     .foregroundStyle(Theme.textSecondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                             }
                             if channel.dailyReportEnabled, let time = channel.dailyReportTime {
                                 HStack(spacing: 5) {
-                                    Image(systemName: "clock")
-                                        .font(.caption2)
+                                    LucideIcon(sf: "clock", size: 11)
                                         .foregroundStyle(Theme.textTertiary)
                                     Text("Daily report · \(time)")
-                                        .font(.caption)
+                                        .font(WebTheme.sans(12))
                                         .foregroundStyle(Theme.textTertiary)
                                         .monospacedDigit()
                                 }
                             }
                         }
                         Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
+                        LucideIcon(sf: "chevron.right", size: 12)
                             .foregroundStyle(Theme.textTertiary)
                     }
                     .contentShape(Rectangle())
@@ -268,7 +264,7 @@ struct ChannelStatusPill: View {
 
     var body: some View {
         Text(status.label)
-            .font(.caption2.weight(.semibold))
+            .font(WebTheme.sans(11, .semibold))
             .foregroundStyle(status.tint)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
@@ -284,7 +280,7 @@ struct ChannelTypeAvatar: View {
 
     var body: some View {
         Image(systemName: type.icon)
-            .font(.system(size: size * 0.42, weight: .semibold))
+            .font(WebTheme.sans(size * 0.42, .semibold))
             .foregroundStyle(type.tint)
             .frame(width: size, height: size)
             .background(type.tint.opacity(0.16), in: Circle())

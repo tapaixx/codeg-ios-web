@@ -76,6 +76,21 @@ targets:
         CFBundleLocalizations:
           - en
           - zh-Hans
+        # Bundled faces for the web-style design system (CodegiOS/Resources/Fonts):
+        # Inter is the web client's default UI font, JetBrains Mono its code font,
+        # and lucide.ttf carries its icon set. Registered by filename because
+        # xcodegen copies resources flat into the bundle. A missing entry here
+        # degrades silently to the system font — LucideFont.verify() logs it in
+        # DEBUG at launch.
+        UIAppFonts:
+          - Inter-Regular.ttf
+          - Inter-Medium.ttf
+          - Inter-SemiBold.ttf
+          - Inter-Bold.ttf
+          - JetBrainsMono-Regular.ttf
+          - JetBrainsMono-Medium.ttf
+          - JetBrainsMono-Bold.ttf
+          - lucide.ttf
         CFBundleURLTypes:
           - CFBundleURLName: app.codeg.ios
             CFBundleURLSchemes:

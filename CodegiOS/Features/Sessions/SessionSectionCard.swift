@@ -71,20 +71,19 @@ struct SessionSectionCard: View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(totalLabel)
-                    .font(.caption2.weight(.bold))
+                    .font(WebTheme.sans(11, .bold))
                     .foregroundStyle(tint)
                     .tracking(0.8)
                     .textCase(.uppercase)
                 Text(LocalizedStringKey(stringLiteral: title))
-                    .font(.title3.weight(.bold))
+                    .font(WebTheme.sans(16, .bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
             Spacer(minLength: 8)
             // A subtle expand affordance (the whole card is tappable).
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                .font(.caption2.weight(.bold))
+            LucideIcon(sf: "arrow.up.left.and.arrow.down.right", size: 11)
                 .foregroundStyle(Theme.textTertiary)
         }
     }
@@ -93,10 +92,9 @@ struct SessionSectionCard: View {
         HStack(spacing: 4) {
             Spacer(minLength: 0)
             Text("Show all \(conversations.count)")
-                .font(.caption.weight(.semibold))
+                .font(WebTheme.sans(12, .semibold))
                 .foregroundStyle(tint)
-            Image(systemName: "chevron.right")
-                .font(.caption2.weight(.bold))
+            LucideIcon(sf: "chevron.right", size: 11)
                 .foregroundStyle(tint)
         }
     }
@@ -168,8 +166,7 @@ struct SessionSectionFullScreen: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .bold))
+                        LucideIcon(sf: "xmark", size: 15)
                     }
                     .accessibilityLabel("Close")
                 }
@@ -182,12 +179,12 @@ struct SessionSectionFullScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(totalLabel)
-                .font(.caption2.weight(.bold))
+                .font(WebTheme.sans(11, .bold))
                 .foregroundStyle(tint)
                 .tracking(0.8)
                 .textCase(.uppercase)
             Text(LocalizedStringKey(stringLiteral: title))
-                .font(.largeTitle.weight(.bold))
+                .font(WebTheme.sans(24, .bold))
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)

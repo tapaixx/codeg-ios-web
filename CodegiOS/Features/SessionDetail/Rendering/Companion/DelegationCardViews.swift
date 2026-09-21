@@ -16,7 +16,7 @@ struct CompanionStatusBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             icon
-            Text(label).font(.caption2.weight(.semibold))
+            Text(label).font(WebTheme.sans(11, .semibold))
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 7).padding(.vertical, 3)
@@ -26,17 +26,17 @@ struct CompanionStatusBadge: View {
     @ViewBuilder private var icon: some View {
         switch status {
         case .starting:
-            Image(systemName: "circle.dashed").font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "circle.dashed", size: 9)
         case .running:
             ProgressView().controlSize(.mini).scaleEffect(0.7).frame(width: 10, height: 10)
         case .waiting:
-            Image(systemName: "exclamationmark.shield.fill").font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "exclamationmark.shield.fill", size: 9)
         case .checked:
-            Image(systemName: "clock").font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "clock", size: 9)
         case .ok:
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "checkmark.circle.fill", size: 9)
         case .err:
-            Image(systemName: "xmark.circle.fill").font(.system(size: 9, weight: .bold))
+            LucideIcon(sf: "xmark.circle.fill", size: 9)
         }
     }
 
@@ -117,7 +117,7 @@ struct DelegatedSubThreadCard: View {
                     }
                     if let duration {
                         Text(verbatim: duration)
-                            .font(.caption2.monospacedDigit())
+                            .font(WebTheme.sans(11).monospacedDigit())
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize()
                     }
@@ -126,7 +126,7 @@ struct DelegatedSubThreadCard: View {
                 }
                 if let task = input.task, !task.isEmpty {
                     Text(verbatim: task)
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -142,8 +142,7 @@ struct DelegatedSubThreadCard: View {
         if let agent {
             AgentAvatar(agent: agent, size: 34)
         } else {
-            Image(systemName: "person.fill.questionmark")
-                .font(.system(size: 14))
+            LucideIcon(sf: "person.fill.questionmark", size: 14)
                 .foregroundStyle(Theme.textTertiary)
                 .frame(width: 34, height: 34)
                 .background(Theme.surfaceNested, in: Circle())
@@ -236,7 +235,7 @@ struct DelegationStatusRow: View {
                         MarkdownContent(raw: resultText)
                     } else {
                         Text("No result text.")
-                            .font(.caption.italic())
+                            .font(WebTheme.sans(12).italic())
                             .foregroundStyle(Theme.textTertiary)
                     }
                     if res.count > 1 {
@@ -253,7 +252,7 @@ struct DelegationStatusRow: View {
         let shortId = taskId.map { String($0.prefix(8)) }
         return HStack(spacing: 8) {
             Image(systemName: kind == .cancel ? "xmark.circle" : "arrow.triangle.2.circlepath")
-                .font(.system(size: 12, weight: .semibold))
+                .font(WebTheme.sans(12, .semibold))
                 .foregroundStyle(badge.status == .err ? Theme.danger : Theme.textSecondary)
                 .frame(width: 16)
             Text(labelKey(shortId: shortId))
@@ -262,13 +261,13 @@ struct DelegationStatusRow: View {
                 .lineLimit(1).truncationMode(.tail)
             if count > 1 {
                 Text(verbatim: "×\(count)")
-                    .font(.caption2.monospacedDigit())
+                    .font(WebTheme.sans(11).monospacedDigit())
                     .foregroundStyle(Theme.textTertiary)
                     .fixedSize()
             }
             if let duration {
                 Text(verbatim: duration)
-                    .font(.caption2.monospacedDigit())
+                    .font(WebTheme.sans(11).monospacedDigit())
                     .foregroundStyle(Theme.textTertiary)
                     .fixedSize()
             }
@@ -276,8 +275,7 @@ struct DelegationStatusRow: View {
             CompanionStatusBadge(status: badge.status, errorCode: badge.errorCode)
                 .fixedSize()
             if expandable {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .bold))
+                LucideIcon(sf: "chevron.right", size: 9)
                     .foregroundStyle(Theme.textTertiary)
                     .rotationEffect(.degrees(expanded ? 90 : 0))
             }
@@ -303,14 +301,14 @@ struct DelegationStatusRow: View {
         HStack(spacing: 12) {
             Spacer()
             Button { pageIdx = max(idx - 1, 0) } label: {
-                Image(systemName: "chevron.left").font(.system(size: 11, weight: .bold))
+                LucideIcon(sf: "chevron.left", size: 11)
             }
             .disabled(idx <= 0)
             Text(verbatim: "\(idx + 1) / \(total)")
-                .font(.caption2.monospacedDigit())
+                .font(WebTheme.sans(11).monospacedDigit())
                 .foregroundStyle(Theme.textTertiary)
             Button { pageIdx = min(idx + 1, lastIdx) } label: {
-                Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold))
+                LucideIcon(sf: "chevron.right", size: 11)
             }
             .disabled(idx >= lastIdx)
             Spacer()

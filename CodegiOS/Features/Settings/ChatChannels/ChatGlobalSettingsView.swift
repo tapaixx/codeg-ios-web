@@ -67,7 +67,7 @@ struct ChatGlobalSettingsView: View {
             }
             if !model.prefixValid {
                 Text("Must be 1–3 non-alphanumeric characters.")
-                    .font(.caption).foregroundStyle(Theme.danger)
+                    .font(WebTheme.sans(12)).foregroundStyle(Theme.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.bottom, 10)
             }
@@ -94,7 +94,7 @@ struct ChatGlobalSettingsView: View {
                         // Fixed event labels/notes localize via a runtime catalog lookup.
                         Text(LocalizedStringKey(stringLiteral: event.label)).foregroundStyle(Theme.textPrimary)
                         if let note = event.note {
-                            Text(LocalizedStringKey(stringLiteral: note)).font(.caption).foregroundStyle(Theme.textTertiary)
+                            Text(LocalizedStringKey(stringLiteral: note)).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary)
                         }
                     }
                     Spacer(minLength: 8)
@@ -114,7 +114,7 @@ struct ChatGlobalSettingsView: View {
         EditorSection(title: "Webhooks", footer: "Forwarded events are POSTed to each enabled URL.") {
             if model.webhooks.isEmpty {
                 Text("No webhooks.")
-                    .font(.subheadline).foregroundStyle(Theme.textTertiary)
+                    .font(WebTheme.sans(14)).foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.vertical, 11)
             }
@@ -149,7 +149,7 @@ struct ChatGlobalSettingsView: View {
             Button {
                 model.addWebhook()
             } label: {
-                Label("Add Webhook", systemImage: "plus").font(.subheadline)
+                Label("Add Webhook", systemImage: "plus").font(WebTheme.sans(14))
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.accent)

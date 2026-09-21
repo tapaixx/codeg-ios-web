@@ -26,14 +26,14 @@ struct WeixinQRView: View {
                     Spacer()
                     qrArea
                     Text(statusText)
-                        .font(.subheadline)
+                        .font(WebTheme.sans(14))
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                     if case .expired = phase { refreshButton }
                     if case .failed = phase { refreshButton }
                     Spacer()
                     Text("Open WeChat, tap the “+” and choose Scan, then point your camera at the code.")
-                        .font(.caption)
+                        .font(WebTheme.sans(12))
                         .foregroundStyle(Theme.textTertiary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
@@ -63,14 +63,11 @@ struct WeixinQRView: View {
             case .loading:
                 ProgressView().controlSize(.large).tint(.black)
             case .expired:
-                Image(systemName: "arrow.clockwise.circle")
-                    .font(.system(size: 56)).foregroundStyle(.black.opacity(0.4))
+                LucideIcon(sf: "arrow.clockwise.circle", size: 56)
             case .failed:
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 48)).foregroundStyle(.orange)
+                LucideIcon(sf: "exclamationmark.triangle", size: 48)
             case .confirmed:
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 64)).foregroundStyle(Color(red: 0.10, green: 0.72, blue: 0.30))
+                LucideIcon(sf: "checkmark.circle.fill", size: 64)
             case .showing, .scanned:
                 if let image {
                     Image(uiImage: image)
@@ -87,7 +84,7 @@ struct WeixinQRView: View {
         Button { attempt += 1 } label: {
             Label("Refresh QR Code", systemImage: "arrow.clockwise")
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.web(.outline))
         .tint(Theme.accent)
     }
 

@@ -257,9 +257,11 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         // ("Tasks that do not report any progress will be expired"), and an
         // indeterminate 0/0 counts as none. The ring is the system's and cannot
         // show text, so it is made into the one thing that IS honest about a
-        // turn: a clock. One lap of the ring is one hour of wall-clock time,
-        // advanced by the heartbeat below; it wraps and starts the next lap.
-        // The exact figure stays in the subtitle ("· Elapsed 4 min").
+        // turn: a clock. One lap of the ring is ten minutes of wall-clock
+        // time — fast enough to read as "alive and moving" rather than as a
+        // percentage — advanced by the heartbeat below; it wraps and starts
+        // the next lap.
+        // The exact figure stays in the subtitle ("4 min · Editing …").
         task.progress.totalUnitCount = Self.progressLapSeconds
         task.progress.completedUnitCount = 0
         lock.unlock()
@@ -288,7 +290,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     }
 
     /// One lap of the progress ring, in seconds of wall-clock time.
-    private static let progressLapSeconds: Int64 = 60 * 60
+    private static let progressLapSeconds: Int64 = 10 * 60
     private static let progressHeartbeat: TimeInterval = 20
 
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
@@ -361,7 +363,10 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
                 ?? only.startedAt
             return (
                 only.title,
-                "\(only.phase) · \(Self.elapsedText(from: startedAt, now: now))"
+                // Time first: the expanded view and the lock screen truncate a
+                // long phase ("Editing SomeLongFileName.swift"), and the figure
+                // is the thing a glance is after.
+                "\(Self.elapsedText(from: startedAt, now: now)) · \(only.phase)"
             )
         }
         return ("Codeg", "Agent task")
@@ -392,9 +397,10 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     private static func elapsedText(from startedAt: Date, now: Date) -> String {
         let seconds = max(0, now.timeIntervalSince(startedAt))
-        guard seconds >= 60 else { return "Elapsed <1 min" }
+        guard seconds >= 60 else { return "<1 min" }
         let minutes = max(1, Int(seconds / 60))
-        return "Elapsed \(minutes) min"
+        guard minutes >= 60 else { return "\(minutes) min" }
+        return "\(minutes / 60) h \(minutes % 60) min"
     }
 
     // MARK: - Network path recovery

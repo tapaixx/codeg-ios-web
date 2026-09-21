@@ -264,6 +264,15 @@ final class AppModel {
             return
         }
         guard let route = Route.from(url: url) else { return }
+        // `?server=<uuid>` names the server the id belongs to — a notification
+        // about one server can arrive while another is selected.
+        if let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "server" })?.value,
+           let serverID = UUID(uuidString: raw),
+           serverID != selectedServerID,
+           serverStore.servers.contains(where: { $0.id == serverID }) {
+            selectedServerID = serverID
+        }
         switch route {
         case .conversation(let id): routeWeb(toConversation: id)
         case .newSession, .project: webDestination = .workspace

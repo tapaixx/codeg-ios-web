@@ -110,8 +110,9 @@ final class RunningTurnWatcher {
         BackgroundAgentCoordinator.shared.navigationMetadataChanged()
 
         let id = conversation.id
+        let serverID = server.id
         let task = Task { [weak self] in
-            await Self.attach(conversation, client: client)
+            await Self.attach(conversation, serverID: serverID, client: client)
             guard let self, !Task.isCancelled else { return }
             self.markFinished(id)
         }
@@ -142,7 +143,7 @@ final class RunningTurnWatcher {
     /// One attach, start to finish. Returns when the turn completes, the server
     /// detaches us, the socket gives up, or the task is cancelled — the stream
     /// closes on every exit, which is what ends the continued-processing turn.
-    private static func attach(_ conversation: ConversationSummary, client: CodegClient) async {
+    private static func attach(_ conversation: ConversationSummary, serverID: UUID, client: CodegClient) async {
         // No live connection means the status is stale or the agent has already
         // gone; there is nothing to listen to.
         guard let found = try? await client.findConnection(
@@ -150,6 +151,12 @@ final class RunningTurnWatcher {
             sessionId: conversation.externalId,
             agentType: conversation.agentType
         ) else { return }
+
+        // Notifications raised from this attach know which conversation to
+        // open when tapped.
+        let coordinator = BackgroundAgentCoordinator.shared
+        coordinator.registerRoute(connectionID: found.connectionId, serverID: serverID, conversationID: conversation.id)
+        defer { coordinator.unregisterRoute(connectionID: found.connectionId) }
 
         let stream = EventStream(baseURL: client.baseURL, token: client.token)
         stream.turnTitle = Self.islandTitle(for: conversation)

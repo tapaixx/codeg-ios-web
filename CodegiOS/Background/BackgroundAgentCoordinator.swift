@@ -37,6 +37,9 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private let networkQueue = DispatchQueue(label: "app.codeg.background.network")
 
     private var activeTurns: [UUID: ActiveTurn] = [:]
+    /// Where a notification about a connection should land when tapped:
+    /// the server and conversation the watcher attached it for.
+    private var routes: [String: (serverID: UUID, conversationID: Int)] = [:]
     private var pendingRequests: [String: PendingRequest] = [:]
     private var notificationCategories: [String: UNNotificationCategory] = [:]
     private var networkListeners: [UUID: @Sendable () -> Void] = [:]
@@ -105,6 +108,16 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         lock.lock()
         backgroundedAt = nil
         lock.unlock()
+    }
+
+    // MARK: - Notification routing
+
+    func registerRoute(connectionID: String, serverID: UUID, conversationID: Int) {
+        lock.lock(); routes[connectionID] = (serverID, conversationID); lock.unlock()
+    }
+
+    func unregisterRoute(connectionID: String) {
+        lock.lock(); routes.removeValue(forKey: connectionID); lock.unlock()
     }
 
     // MARK: - Active turn / continued processing
@@ -454,7 +467,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             identifier: key,
             title: parsed.isPlan ? "Codeg plan needs approval" : "Codeg needs permission",
             body: body,
-            categoryID: categoryID
+            categoryID: categoryID,
+            connectionID: connectionID
         )
     }
 
@@ -522,7 +536,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             identifier: key,
             title: "Codeg plan ready for review",
             body: planMarkdown.isEmpty ? "The agent is waiting for a plan decision." : planMarkdown,
-            categoryID: categoryID
+            categoryID: categoryID,
+            connectionID: connectionID
         )
     }
 
@@ -530,27 +545,29 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         resolvePending(key: "plan:\(approvalID)")
     }
 
-    func notifyTurnCompleted() {
+    func notifyTurnCompleted(connectionID: String? = nil) {
         scheduleNotification(
             identifier: "turn-complete:\(UUID().uuidString)",
             title: "Codeg task completed",
             body: "The agent finished its reply.",
-            categoryID: ""
+            categoryID: "",
+            connectionID: connectionID
         )
     }
 
-    func notifyTurnFailed(_ message: String) {
+    func notifyTurnFailed(_ message: String, connectionID: String? = nil) {
         scheduleNotification(
             identifier: "turn-failed:\(UUID().uuidString)",
             title: "Codeg task needs attention",
             body: message,
-            categoryID: ""
+            categoryID: "",
+            connectionID: connectionID
         )
     }
 
     private func scheduleQuestionStep(key: String) {
         lock.lock()
-        guard case .question(_, _, let questionID, let questions, _, let index, _)? = pendingRequests[key],
+        guard case .question(_, let connectionID, let questionID, let questions, _, let index, _)? = pendingRequests[key],
               questions.indices.contains(index) else {
             lock.unlock()
             return
@@ -579,7 +596,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             identifier: key,
             title: question.header.isEmpty ? "Codeg has a question" : question.header,
             body: question.question,
-            categoryID: categoryID
+            categoryID: categoryID,
+            connectionID: connectionID
         )
     }
 
@@ -615,12 +633,23 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
-    private func scheduleNotification(identifier: String, title: String, body: String, categoryID: String) {
+    private func scheduleNotification(
+        identifier: String, title: String, body: String, categoryID: String, connectionID: String? = nil
+    ) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = String(body.prefix(1200))
         if !categoryID.isEmpty { content.categoryIdentifier = categoryID }
         content.sound = .default
+        if let connectionID {
+            lock.lock(); let route = routes[connectionID]; lock.unlock()
+            if let route {
+                content.userInfo = [
+                    "serverID": route.serverID.uuidString,
+                    "conversationID": route.conversationID,
+                ]
+            }
+        }
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         notificationCenter.add(request) { _ in }
     }
@@ -629,7 +658,23 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     private func handleNotificationResponse(_ response: UNNotificationResponse) async {
         let id = response.actionIdentifier
-        if id.hasPrefix("codeg.permission.apply|") {
+        if id == UNNotificationDefaultActionIdentifier {
+            // A plain tap: land on the conversation the notification was about.
+            // Routed through the app's own URL scheme so it takes the same path
+            // as a Live Activity tap or an external link.
+            let info = response.notification.request.content.userInfo
+            guard let conversationID = info["conversationID"] as? Int else { return }
+            var components = URLComponents()
+            components.scheme = "codegweb"
+            components.host = "conversation"
+            components.path = "/\(conversationID)"
+            if let serverID = info["serverID"] as? String {
+                components.queryItems = [URLQueryItem(name: "server", value: serverID)]
+            }
+            if let url = components.url {
+                await MainActor.run { UIApplication.shared.open(url) }
+            }
+        } else if id.hasPrefix("codeg.permission.apply|") {
             let parts = id.split(separator: "|", maxSplits: 2).map(String.init)
             guard parts.count == 3 else { return }
             await applyPermission(requestID: parts[1], optionID: parts[2])

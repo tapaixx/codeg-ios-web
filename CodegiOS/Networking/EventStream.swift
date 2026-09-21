@@ -584,10 +584,10 @@ final class EventStream: @unchecked Sendable {
             if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Working") }
 
         case .turnComplete:
-            if appIsBackgrounded { coordinator.notifyTurnCompleted() }
+            if appIsBackgrounded { coordinator.notifyTurnCompleted(connectionID: connectionID) }
 
         case .error(let message, _):
-            if appIsBackgrounded { coordinator.notifyTurnFailed(message) }
+            if appIsBackgrounded { coordinator.notifyTurnFailed(message, connectionID: connectionID) }
 
         default:
             break

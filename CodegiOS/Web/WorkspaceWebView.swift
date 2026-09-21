@@ -18,7 +18,7 @@ struct WorkspaceWebView: UIViewRepresentable {
     let baseURL: URL
     let token: String
     /// A destination to load *instead of* `/workspace` — a Live Activity tap, a
-    /// `codeg://` link. Consumed once; the web client clears the query itself
+    /// `codegweb://` link. Consumed once; the web client clears the query itself
     /// after it has opened the conversation (`DeepLinkBootstrap`).
     @Binding var pendingDestination: WebDestination?
     /// Set when the page bounces to `/login`: the server rejected the token.
@@ -137,11 +137,11 @@ struct WorkspaceWebView: UIViewRepresentable {
 
         /// The main frame never leaves the server's origin — whatever kind of
         /// navigation asks (a tapped link, a script, a form): it goes to Safari
-        /// instead. Sub-frames are the page's business. `codeg://` links go to
+        /// instead. Sub-frames are the page's business. `codegweb://` links go to
         /// the app itself.
         fileprivate static func policy(for action: WKNavigationAction, origin: URL) -> WKNavigationActionPolicy {
             guard let url = action.request.url else { return .allow }
-            if url.scheme?.lowercased() == "codeg" {
+            if url.scheme?.lowercased() == "codegweb" {
                 UIApplication.shared.open(url)
                 return .cancel
             }

@@ -120,7 +120,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v1.0.1-tapaixx.6
+          TAG: v1.0.1-tapaixx.7
           BASENAME: ${{ steps.package.outputs.basename }}
           VERSION: ${{ steps.package.outputs.version }}
           BUILD: ${{ steps.package.outputs.build }}
@@ -148,7 +148,7 @@ jobs:
           - Live Activity taps and `codeg://conversation/<id>` links open the
             conversation through the web client's own deep-link query.
 
-          Build 8. The native SwiftUI screens from earlier builds are unreachable
+          Build 9 — **new bundle id `app.codeg.ios.web`, shown as "Codeg Web", URL scheme `codegweb://`**, so it installs beside the original codeg-ios app; a fresh install, so servers must be added again. The native SwiftUI screens from earlier builds are unreachable
           and will be removed in a later build.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.

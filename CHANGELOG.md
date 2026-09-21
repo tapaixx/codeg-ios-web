@@ -12,6 +12,10 @@ the text as the git tag message and the GitHub Release notes.
 
 ### Changed
 
+- **New app identity**: bundle id `app.codeg.ios.web`, display name "Codeg
+  Web", URL scheme `codegweb://`, continued-processing task prefix
+  `app.codeg.ios.web.continued.agent`. Installs beside the original codeg-ios
+  app; being a new app, saved servers must be added again.
 - **The app now shows the codeg web client** (`/workspace` from the selected
   server, in a `WKWebView`) instead of native SwiftUI screens. The token is
   injected before the page loads; same-origin navigation stays in-app,
@@ -20,7 +24,7 @@ the text as the git tag message and the GitHub Release notes.
 - Live Activity, continued processing and background notifications are now
   driven by `RunningTurnWatcher`, a native attach to each running session's ACP
   connection, so they work regardless of which client started the turn.
-- Live Activity taps and `codeg://conversation/<id>` links open the
+- Live Activity taps and `codegweb://conversation/<id>` links open the
   conversation through the web client's own deep-link query.
 
 ### Added

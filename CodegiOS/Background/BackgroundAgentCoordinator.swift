@@ -51,7 +51,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private var notificationAuthorizationRequested = false
     private var configured = false
 
-    private static let continuedIdentifierPrefix = "app.codeg.ios.continued.agent"
+    private static let continuedIdentifierPrefix = "app.codeg.ios.web.continued.agent"
     private static let retryTTL: TimeInterval = 60
     private static let backgroundQuietPeriod: TimeInterval = 60
     private static let systemUpdateDebounce: TimeInterval = 3

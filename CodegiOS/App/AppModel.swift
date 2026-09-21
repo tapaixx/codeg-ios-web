@@ -47,7 +47,7 @@ final class AppModel {
     /// The Settings tab's stack is value-driven over `SettingsLeaf` (its own
     /// typed path, separate from the `Route` stacks above) so settings sub-screens
     /// stay out of the global deep-link routing while remaining programmatically
-    /// pushable (e.g. `codeg://settings/<slug>`).
+    /// pushable (e.g. `codegweb://settings/<slug>`).
     var settingsPath: [SettingsLeaf] = []
 
     /// Width class mirrored in by RootView so `open(_:)` can decide between a
@@ -57,7 +57,7 @@ final class AppModel {
     // MARK: - Web shell
 
     /// Where the web client should go next — set by a Live Activity tap or a
-    /// `codeg://` link, consumed by `WorkspaceWebView` as one page load.
+    /// `codegweb://` link, consumed by `WorkspaceWebView` as one page load.
     var webDestination: WebDestination?
     /// The page bounced to `/login`: the server rejected the stored token.
     /// Cleared when the server, its endpoint or its token changes.
@@ -71,7 +71,7 @@ final class AppModel {
     }
 
     /// Resolve a conversation to the web's deep-link shape. The Live Activity
-    /// record and `codeg://conversation/<id>` carry only the id; the web client
+    /// record and `codegweb://conversation/<id>` carry only the id; the web client
     /// also needs the folder and the agent (`DeepLinkBootstrap`), so this is one
     /// round-trip. A conversation the server no longer has lands on the
     /// workspace root, which is the web's own behavior for a stale link.
@@ -227,19 +227,19 @@ final class AppModel {
         paths[tab] = path
     }
 
-    /// Handle a `codeg://` URL. `codeg://tab/<name>` switches tabs;
-    /// `codeg://conversation/<id>` / `codeg://project/<id>` land on the owning
+    /// Handle a `codegweb://` URL. `codegweb://tab/<name>` switches tabs;
+    /// `codegweb://conversation/<id>` / `codegweb://project/<id>` land on the owning
     /// tab with a fresh, predictable stack (so Back always returns to that
     /// tab's root, not to wherever the user happened to be).
     func handle(url: URL) {
-        guard url.scheme?.lowercased() == "codeg" else { return }
+        guard url.scheme?.lowercased() == "codegweb" else { return }
         if url.host?.lowercased() == "tab",
            url.pathComponents.count > 1,
            let tab = AppTab(rawValue: url.pathComponents[1].lowercased()) {
             select(tab: tab)
             return
         }
-        // `codeg://settings/<slug>` jumps straight to a Settings sub-screen (used
+        // `codegweb://settings/<slug>` jumps straight to a Settings sub-screen (used
         // for screenshot verification, and harmless in production). The leaf is
         // honored on BOTH shells: compact pushes it onto the Settings tab; regular
         // presents the Settings sheet already pushed to it (the sheet binds the

@@ -17,7 +17,7 @@ What the app adds is what a browser tab cannot do:
 - **Actionable notifications** for permission requests, agent questions and plan
   approvals while the app is in the background — answered from the notification
   without opening the app.
-- **Deep links** — a Live Activity tap or a `codeg://conversation/<id>` link
+- **Deep links** — a Live Activity tap or a `codegweb://conversation/<id>` link
   lands the page on that conversation via the web's own
   `/workspace?folderId&conversationId&agent` entry.
 

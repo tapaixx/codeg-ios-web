@@ -8,6 +8,33 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Changed
+
+- The Dynamic Island's ring is a clock: one lap is ten minutes of the turn's
+  wall-clock time (it was a bar against a two-hour window, which read as a
+  progress percentage that meant nothing). The subtitle now leads with the
+  elapsed time — "4 min · Editing foo.swift" — so the expanded view and the
+  lock screen show the figure before a long phase gets truncated.
+- Focusing the composer no longer zooms the page in. The keyboard still
+  scrolls the field into view; only WebKit's under-16px focus zoom is off.
+
+## [0.0.4] — 2026-09-21
+
+### Changed
+
+- Tapping a notification (task completed / failed, permission, question, plan)
+  opens the conversation it is about, switching servers first if needed.
+  Action buttons on notifications still answer without opening the app.
+- The Dynamic Island's phase line says what the agent is doing in plain
+  words — Thinking / Writing / Editing <file> / Running <command> / Reading /
+  Searching / Browsing — and the three waits are told apart: Needs your
+  permission / Has a question for you / Plan awaiting your review. With several
+  tasks running, one that needs you takes the first line.
+- Long-press guards moved to `window` so they bracket React's own dispatch;
+  the page's context menus no longer open from a long press on touch.
+
 ## [0.0.3] — 2026-09-21
 
 ### Changed

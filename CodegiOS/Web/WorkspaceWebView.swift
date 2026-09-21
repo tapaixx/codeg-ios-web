@@ -113,7 +113,8 @@ struct WorkspaceWebView: UIViewRepresentable {
     /// dispatch one zero-distance `pointermove` — the same event a jittery
     /// finger sends anyway — and the timer is cleared before it can fire.
     /// Mouse and trackpad (iPad) keep their real context menus. WebKit's own
-    /// callout on links and images is turned off alongside.
+    /// callout on links and images is turned off alongside, and the page's
+    /// floating selection toolbar is hidden on touch — see the stylesheet.
     private static let touchScript = WKUserScript(
         source: """
         (function () {
@@ -135,7 +136,15 @@ struct WorkspaceWebView: UIViewRepresentable {
             if (lastWasTouch) { e.preventDefault(); e.stopImmediatePropagation(); }
           }, true);
           var style = document.createElement("style");
-          style.textContent = "a, img { -webkit-touch-callout: none; }";
+          style.textContent =
+            "a, img { -webkit-touch-callout: none; }" +
+            // The page's own floating selection toolbar (copy / quote / ask —
+            // `selection-action-bubble.tsx`) is built for a mouse selection. On
+            // touch it appears on top of iOS's own Copy/Look Up callout, and the
+            // two fight over the selection. Touch keeps the system one.
+            "@media (hover: none) and (pointer: coarse) {" +
+            "  div[role=\"toolbar\"].absolute.rounded-full.z-30 { display: none !important; }" +
+            "}";
           (document.head || document.documentElement).appendChild(style);
         })();
         """,

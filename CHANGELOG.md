@@ -8,6 +8,16 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Changed
+
+- The page's floating selection toolbar (copy / quote / ask) is hidden on
+  touch; it sat on top of iOS's own selection callout and the two fought over
+  the selection. Touch keeps the system callout; mouse and trackpad keep the
+  page's toolbar.
+- Releases are cut by pushing a `v<version>` tag. A push to `main` only builds.
+
 ## [0.0.2] — 2026-09-21
 
 ### Changed

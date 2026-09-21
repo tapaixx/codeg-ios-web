@@ -153,8 +153,7 @@ private struct FileRow: View {
 
     var body: some View {
         HStack(spacing: FileRowMetrics.iconGap) {
-            Image(systemName: icon)
-                .font(WebTheme.sans(15))
+            LucideIcon(sf: icon, size: 15)
                 .foregroundStyle(iconTint)
                 .frame(width: FileRowMetrics.iconWidth)
 
@@ -348,8 +347,7 @@ private struct FileContentView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: FileIcon.symbol(for: relativePath))
-                .font(WebTheme.sans(11))
+            LucideIcon(sf: FileIcon.symbol(for: relativePath), size: 11)
                 .foregroundStyle(Theme.textTertiary)
             (relativePath.isEmpty ? Text("file") : Text(verbatim: relativePath))
                 .font(.mono(11))

@@ -345,6 +345,15 @@ extension WebTheme {
                 tracking: tracking, isMono: isMono
             )
         }
+
+        /// The same step on the mono face — a path, a branch, a commit hash.
+        /// The web sets these with `font-mono` on an otherwise normal text step.
+        var mono: TextStyle {
+            TextStyle(
+                size: size, weight: weight, lineSpacing: lineSpacing,
+                tracking: tracking, isMono: true
+            )
+        }
     }
 }
 

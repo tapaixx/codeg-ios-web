@@ -334,8 +334,7 @@ private struct TodoInputBody: View {
             ForEach(Array(todos.enumerated()), id: \.offset) { _, todo in
                 let status = (todo["status"] as? String) ?? "pending"
                 HStack(alignment: .top, spacing: 7) {
-                    Image(systemName: todoIcon(status))
-                        .font(WebTheme.sans(11))
+                    LucideIcon(sf: todoIcon(status), size: 11)
                         .foregroundStyle(todoTint(status))
                     Text((todo["content"] as? String) ?? (todo["title"] as? String) ?? "")
                         .font(WebTheme.sans(12))
@@ -380,7 +379,7 @@ private struct WebInputBody: View {
     }
     private func pill(icon: String, text: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(WebTheme.sans(10)).foregroundStyle(Theme.textTertiary)
+            LucideIcon(sf: icon, size: 10).foregroundStyle(Theme.textTertiary)
             Text(text).font(.mono(11)).foregroundStyle(Theme.textSecondary)
                 .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
         }

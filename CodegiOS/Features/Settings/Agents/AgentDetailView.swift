@@ -162,14 +162,14 @@ struct AgentDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let path = agent.configFilePath, !path.isEmpty {
-                    Label(path, systemImage: "doc.text")
-                        .font(WebTheme.mono(12))
+                    WebLabel(verbatim: path, icon: .fileText, iconSize: WebTheme.Size.iconSmall,
+                             style: .xs.mono, dimsIcon: false)
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1).truncationMode(.middle)
                 }
                 if !agent.available {
-                    Label("Not available on this server.", systemImage: "exclamationmark.triangle.fill")
-                        .font(WebTheme.sans(12, .medium))
+                    WebLabel("Not available on this server.", icon: .triangleAlert,
+                             iconSize: WebTheme.Size.iconSmall, style: .xs.weight(.medium), dimsIcon: false)
                         .foregroundStyle(Theme.danger)
                 }
             }
@@ -242,8 +242,7 @@ struct AgentDetailView: View {
 
                     // The status sentence (version prefix stripped) with its glyph.
                     HStack(alignment: .top, spacing: 9) {
-                        Image(systemName: glyph.symbol)
-                            .font(WebTheme.sans(14, .semibold))
+                        LucideIcon(sf: glyph.symbol, size: 14)
                             .foregroundStyle(glyph.color)
                             .padding(.top, 1)
                         Text(parts.note)
@@ -391,8 +390,7 @@ struct AgentDetailView: View {
         let glyph = checkGlyph(check)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: glyph.symbol)
-                    .font(WebTheme.sans(16, .semibold))
+                LucideIcon(sf: glyph.symbol, size: 16)
                     .foregroundStyle(glyph.color)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 3) {
@@ -419,7 +417,7 @@ struct AgentDetailView: View {
     private var rerunRow: some View {
         Button { Task { await loadPreflight(force: true) } } label: {
             HStack(spacing: 7) {
-                Image(systemName: "arrow.clockwise")
+                LucideIcon(.refreshCw, size: WebTheme.Size.icon)
                 Text("Re-run checks")
                 Spacer(minLength: 0)
             }
@@ -495,7 +493,7 @@ struct AgentDetailView: View {
         Button(role: .destructive) {
             Task { await model.clearCache(agent) }
         } label: {
-            Label("Clear Binary Cache", systemImage: "trash").frame(maxWidth: .infinity).padding(.vertical, 4)
+            WebLabel("Clear Binary Cache", icon: .trash2, dimsIcon: false).frame(maxWidth: .infinity).padding(.vertical, 4)
         }
         .buttonStyle(.web(.outline))
         .tint(Theme.danger)

@@ -148,7 +148,7 @@ struct InlineImageView: View {
     private var placeholder: some View {
         HStack(spacing: 8) {
             if failed {
-                Image(systemName: "photo")
+                LucideIcon(.image, size: WebTheme.Size.iconSmall)
                 Text("Image could not be decoded")
             } else {
                 ProgressView().controlSize(.small)

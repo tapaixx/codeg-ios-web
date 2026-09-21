@@ -146,8 +146,9 @@ struct SystemSettingsView: View {
                     .buttonStyle(.web(.outline)).tint(Theme.accent)
                     .disabled(model.probing || model.customShellPath.trimmingCharacters(in: .whitespaces).isEmpty)
                     if let probe = model.probeResult {
-                        Label(probe ? "Executable found" : "Not found", systemImage: probe ? "checkmark.circle" : "xmark.circle")
-                            .font(WebTheme.sans(12))
+                        WebLabel(probe ? "Executable found" : "Not found",
+                                 icon: probe ? .circleCheck : .circleX,
+                                 iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                             .foregroundStyle(probe ? Color(red: 0.30, green: 0.78, blue: 0.38) : Theme.danger)
                     }
                     Spacer(minLength: 0)
@@ -183,8 +184,7 @@ struct SystemSettingsView: View {
                             Text(update.body).font(WebTheme.sans(12)).foregroundStyle(Theme.textTertiary).lineLimit(4)
                         }
                     } else {
-                        Label("You’re up to date.", systemImage: "checkmark.circle")
-                            .font(WebTheme.sans(14)).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
+                        WebLabel("You’re up to date.", icon: .circleCheck, dimsIcon: false).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

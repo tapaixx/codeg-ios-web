@@ -169,8 +169,7 @@ struct TaskStatusIcon: View {
     }
 
     private func icon(_ name: String, _ tint: Color) -> some View {
-        Image(systemName: name)
-            .font(WebTheme.sans(13))
+        LucideIcon(sf: name, size: 13)
             .foregroundStyle(tint)
     }
 }

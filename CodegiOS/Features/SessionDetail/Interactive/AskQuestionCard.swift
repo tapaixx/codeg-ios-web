@@ -64,8 +64,7 @@ struct AskQuestionCard: View {
                 .allowsHitTesting(!readOnly)
 
             if failed, !readOnly {
-                Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(WebTheme.sans(12))
+                WebLabel("Couldn’t submit. Please try again.", icon: .circleAlert, iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                     .foregroundStyle(Theme.danger)
             }
 
@@ -97,8 +96,7 @@ struct AskQuestionCard: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: readOnly ? "questionmark.bubble.fill" : "bubble.left.and.text.bubble.right.fill")
-                .font(WebTheme.sans(16, .semibold))
+            LucideIcon(sf: readOnly ? "questionmark.bubble.fill" : "bubble.left.and.text.bubble.right.fill", size: 16)
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(titleOverride ?? "The agent needs your input")
@@ -266,10 +264,10 @@ struct AskQuestionCard: View {
     }
 
     private func indicator(selected: Bool, multi: Bool) -> some View {
-        Image(systemName: multi
-              ? (selected ? "checkmark.square.fill" : "square")
-              : (selected ? "largecircle.fill.circle" : "circle"))
-            .font(WebTheme.sans(18))
+        LucideIcon(sf: multi
+                   ? (selected ? "checkmark.square.fill" : "square")
+                   : (selected ? "largecircle.fill.circle" : "circle"),
+                   size: 18)
             .foregroundStyle(selected ? Theme.accent : Theme.textTertiary)
     }
 

@@ -631,11 +631,21 @@ struct WebSkeleton: View {
     }
 }
 
-/// A sidebar section header — `sidebar-section-header.tsx`: 11pt medium, muted,
-/// with an optional trailing count.
+/// A sidebar section header — `sidebar-section-header.tsx`.
+///
+/// The label is `text-[0.875rem] font-normal` (14pt regular, the list's own
+/// size) in `sidebar-foreground/50` — deliberately NOT `muted-foreground` and
+/// not a smaller step. The web's own comment is explicit that an earlier "looks
+/// a different size" complaint was pure contrast: same family, same size, just
+/// lighter. A 32pt row at an 8pt inset, with an optional disclosure chevron
+/// after the label (rotated a quarter turn when the section is open).
 struct WebSectionHeader<Trailing: View>: View {
     let title: String
     var icon: Lucide? = nil
+    /// `nil` draws no chevron. The web reveals it on hover when expanded but
+    /// keeps it permanently visible under `[@media(hover:none)]` — which is
+    /// every touch device, so it always shows here.
+    var expanded: Bool? = nil
     @ViewBuilder var trailing: () -> Trailing
 
     var body: some View {
@@ -644,19 +654,26 @@ struct WebSectionHeader<Trailing: View>: View {
                 LucideIcon(icon, size: WebTheme.Size.iconSmall)
             }
             Text(verbatim: title)
-                .webText(.xs2, .medium)
+                .webText(.sm)
                 .lineLimit(1)
+                .truncationMode(.tail)
+            if let expanded {
+                LucideIcon(.chevronRight, size: WebTheme.Size.iconSmall)
+                    .rotationEffect(.degrees(expanded ? 90 : 0))
+                    .animation(WebTheme.Motion.expand, value: expanded)
+            }
             Spacer(minLength: WebTheme.Space.two)
             trailing()
         }
-        .foregroundStyle(WebTheme.mutedForeground)
-        .frame(height: WebTheme.Size.controlTiny)
+        .foregroundStyle(WebTheme.sidebarForeground.opacity(0.5))
+        .frame(height: WebTheme.Size.controlSmall)
+        .padding(.horizontal, WebTheme.Space.two)
     }
 }
 
 extension WebSectionHeader where Trailing == EmptyView {
-    init(title: String, icon: Lucide? = nil) {
-        self.init(title: title, icon: icon) { EmptyView() }
+    init(title: String, icon: Lucide? = nil, expanded: Bool? = nil) {
+        self.init(title: title, icon: icon, expanded: expanded) { EmptyView() }
     }
 }
 

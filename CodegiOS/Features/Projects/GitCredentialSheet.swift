@@ -163,7 +163,7 @@ struct GitCredentialSheet: View {
             Button {
                 revealSecret.toggle()
             } label: {
-                Image(systemName: revealSecret ? "eye.slash" : "eye")
+                LucideIcon(sf: revealSecret ? "eye.slash" : "eye", size: WebTheme.Size.icon)
                     .foregroundStyle(Theme.textTertiary)
             }
             .buttonStyle(.plain)

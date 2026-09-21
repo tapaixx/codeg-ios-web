@@ -82,7 +82,7 @@ struct WeixinQRView: View {
 
     private var refreshButton: some View {
         Button { attempt += 1 } label: {
-            Label("Refresh QR Code", systemImage: "arrow.clockwise")
+            WebLabel("Refresh QR Code", icon: .refreshCw, dimsIcon: false)
         }
         .buttonStyle(.web(.outline))
         .tint(Theme.accent)

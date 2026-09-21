@@ -86,8 +86,7 @@ struct AskQuestionResultCard: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer(minLength: 4)
-                Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                    .font(WebTheme.sans(9, .bold))
+                LucideIcon(sf: expanded ? "chevron.up" : "chevron.down", size: 9)
                     .foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, 12).padding(.vertical, 8)

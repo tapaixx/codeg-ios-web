@@ -319,8 +319,7 @@ struct NodeMarker: View {
     /// on-accent glyph (used for the prominent user / error markers).
     private func chip(icon: String, tint: Color, filled: Bool = false, scale: CGFloat = 1) -> some View {
         let d = size * scale
-        return Image(systemName: icon)
-            .font(WebTheme.sans(d * 0.42, .semibold))
+        return LucideIcon(sf: icon, size: d * 0.42)
             .foregroundStyle(filled ? Theme.onAccent : tint)
             .frame(width: d, height: d)
             .background(filled ? AnyShapeStyle(tint) : AnyShapeStyle(tint.opacity(0.16)), in: Circle())

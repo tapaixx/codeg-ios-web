@@ -139,12 +139,12 @@ struct PiConfigSection: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 if checkingPi {
-                    Label("Checking…", systemImage: "hourglass").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
+                    WebLabel("Checking…", icon: .hourglass, dimsIcon: false).foregroundStyle(Theme.textSecondary)
                 } else if piStatus?.found == true {
                     Label {
                         Text(piStatus?.version.map { "Installed · \($0)" } ?? "Installed").foregroundStyle(Theme.textPrimary)
                     } icon: {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                        LucideIcon(.circleCheckBig, size: WebTheme.Size.icon).foregroundStyle(Theme.accent)
                     }
                     .font(WebTheme.sans(14))
                     if let path = piStatus?.resolvedPath, !path.isEmpty {
@@ -152,7 +152,7 @@ struct PiConfigSection: View {
                             .lineLimit(1).truncationMode(.middle)
                     }
                 } else {
-                    Label("Not installed", systemImage: "xmark.circle").font(WebTheme.sans(14)).foregroundStyle(Theme.textSecondary)
+                    WebLabel("Not installed", icon: .circleX, dimsIcon: false).foregroundStyle(Theme.textSecondary)
                 }
             }
             Spacer(minLength: 8)
@@ -182,7 +182,7 @@ struct PiConfigSection: View {
                     get: { command }, set: { command = $0; validation = nil })).agentField()
                 Button { Task { await handleValidate() } } label: {
                     if validating { ProgressView().controlSize(.small) }
-                    else { Label("Validate", systemImage: "terminal").labelStyle(.titleAndIcon) }
+                    else { WebLabel("Validate", icon: .terminal, style: .sm.weight(.medium), dimsIcon: false) }
                 }
                 .font(WebTheme.sans(14, .medium)).buttonStyle(.web(.outline)).tint(Theme.accent)
                 .disabled(validating || command.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -190,7 +190,7 @@ struct PiConfigSection: View {
         }
         if let v = validation {
             HStack(alignment: .top, spacing: 6) {
-                Image(systemName: v.found ? "checkmark.circle.fill" : "xmark.circle.fill")
+                LucideIcon(sf: v.found ? "checkmark.circle.fill" : "xmark.circle.fill", size: WebTheme.Size.icon)
                     .foregroundStyle(v.found ? Theme.accent : Theme.danger)
                 Text(v.found
                      ? LocalizedStringKey(stringLiteral: [v.resolvedPath, v.version.map { "(\($0))" }].compactMap { $0 }.joined(separator: " "))
@@ -290,7 +290,7 @@ struct PiConfigSection: View {
 
     private func resultBanner(_ b: Banner) -> some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill")
+            LucideIcon(sf: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill", size: WebTheme.Size.icon)
                 .foregroundStyle(b.isError ? Theme.danger : Theme.accent)
             Text(LocalizedStringKey(stringLiteral: b.text)).font(WebTheme.sans(12))
                 .foregroundStyle(b.isError ? Theme.danger : Theme.textSecondary)
@@ -307,7 +307,7 @@ struct PiConfigSection: View {
                               disabled: Bool, prominent: Bool, action: @escaping () -> Void) -> some View {
         let label = Button(action: action) {
             HStack(spacing: 6) {
-                if busy { ProgressView().controlSize(.small) } else { Image(systemName: icon) }
+                if busy { ProgressView().controlSize(.small) } else { LucideIcon(sf: icon, size: WebTheme.Size.icon) }
                 Text(title).fontWeight(.semibold)
             }
             .padding(.horizontal, 14).padding(.vertical, 5)

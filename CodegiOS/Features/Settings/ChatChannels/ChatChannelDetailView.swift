@@ -144,7 +144,10 @@ struct ChatChannelDetailView: View {
 
     private func actionButton(_ title: LocalizedStringKey, icon: String, role: ButtonRole?, action: @escaping () -> Void) -> some View {
         Button(role: role, action: action) {
-            Label(title, systemImage: icon)
+            HStack(spacing: WebTheme.Space.onePointFive) {
+                LucideIcon(sf: icon, size: WebTheme.Size.icon)
+                Text(title)
+            }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }
@@ -171,7 +174,7 @@ struct ChatChannelDetailView: View {
     private var tokenSection: some View {
         EditorSection(title: "Token") {
             HStack {
-                Image(systemName: model.hasToken ? "key.fill" : "key")
+                LucideIcon(sf: model.hasToken ? "key.fill" : "key", size: WebTheme.Size.icon)
                     .foregroundStyle(model.hasToken ? Theme.accent : Theme.textTertiary)
                 Text(model.hasToken ? "\(channel.channelType.secretLabel ?? "Token") is set" : "No token set")
                     .foregroundStyle(Theme.textPrimary)
@@ -232,8 +235,7 @@ private struct MessageLogRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: message.isInbound ? "arrow.down.left" : "arrow.up.right")
-                .font(WebTheme.sans(12, .semibold))
+            LucideIcon(sf: message.isInbound ? "arrow.down.left" : "arrow.up.right", size: 12)
                 .foregroundStyle(message.failed ? Theme.danger : Theme.textSecondary)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 2) {

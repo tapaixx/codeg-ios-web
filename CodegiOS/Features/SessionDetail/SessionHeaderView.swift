@@ -51,7 +51,7 @@ private struct MetaChip: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(WebTheme.sans(9, .semibold))
+            LucideIcon(sf: symbol, size: 9)
             Text(text)
                 .font(mono ? WebTheme.mono(11) : WebTheme.sans(11, .medium))
                 .lineLimit(1)

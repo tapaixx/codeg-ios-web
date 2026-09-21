@@ -261,7 +261,7 @@ private struct FolderHeader: View {
 
     private func chip(symbol: String, text: String) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(WebTheme.sans(9, .semibold))
+            LucideIcon(sf: symbol, size: 9)
             Text(text)
                 .font(WebTheme.sans(11, .medium))
                 .lineLimit(1)

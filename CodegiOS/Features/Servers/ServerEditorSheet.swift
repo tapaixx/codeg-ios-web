@@ -162,7 +162,7 @@ struct ServerEditorSheet: View {
                     if model.isTesting {
                         ProgressView().controlSize(.small).tint(Theme.accent)
                     } else {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
+                        LucideIcon(.wifi, size: WebTheme.Size.icon)
                     }
                     Text("Test Connection").fontWeight(.medium)
                 }
@@ -240,8 +240,7 @@ private struct TestResultRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
-            Image(systemName: symbol)
-                .font(WebTheme.sans(14, .semibold))
+            LucideIcon(sf: symbol, size: 14)
                 .foregroundStyle(tint)
             text
                 .font(WebTheme.sans(14))

@@ -382,8 +382,7 @@ struct GitStatusStrip: View {
 
     private func bannerRow(_ banner: GitBanner) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Image(systemName: icon(banner.kind))
-                .font(WebTheme.sans(12))
+            LucideIcon(sf: icon(banner.kind), size: 12)
                 .foregroundStyle(tint(banner.kind))
             Text(banner.message)
                 .font(WebTheme.sans(12))

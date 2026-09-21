@@ -1,16 +1,25 @@
 import SwiftUI
 
-/// An App Store editorial-style card wrapping one session group (Pinned / a
-/// folder / Running / Last 24 Hours). It shows the group header plus a capped
-/// preview of its rows; the **whole card** is a single tap target that
-/// zoom-expands to a fullscreen list (``SessionSectionFullScreen``) via the
-/// host's `.fullScreenCover` + `.navigationTransition(.zoom)`.
+/// One session group (Pinned / a folder / Running / Last 24 Hours): a section
+/// header plus a capped preview of its rows.
+///
+/// No card. The web's sidebar has none — a group is a header over a plain
+/// column on the page background (`sidebar-section-header.tsx` +
+/// `sidebar-conversation-list.tsx`), and the surface that used to wrap this was
+/// the last big non-web shape on the app's first screen. What survives the port
+/// is the *interaction*, which is iOS's and has no web equivalent: the *whole
+/// group* is a single tap target that zoom-expands to a fullscreen list
+/// (``SessionSectionFullScreen``) via the host's `.fullScreenCover` +
+/// `.navigationTransition(.zoom)`.
 ///
 /// Preview rows are display-only (`SessionRow` with no `onTap`) so the card owns
 /// the tap — matching the App Store pattern where you tap the card to open the
 /// collection, then tap a row inside it.
 struct SessionSectionCard: View {
     let title: String
+    /// Kept for the fullscreen drill-in, which still tints its header; the web's
+    /// section header itself carries no per-group color, so this no longer
+    /// paints anything here.
     var tint: Color = Theme.accent
     let conversations: [ConversationSummary]
     /// Per-row folder tag (return `nil` to omit) — shown on cross-folder groups
@@ -25,31 +34,30 @@ struct SessionSectionCard: View {
 
     var body: some View {
         Button(action: onExpand) {
-            GlassCard(cornerRadius: Theme.Radius.lg, padding: 0) {
-                VStack(alignment: .leading, spacing: 2) {
-                    header
-                        .padding(.horizontal, 14)
-                        .padding(.top, 12)
-                        .padding(.bottom, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                header
 
-                    ForEach(conversations.prefix(previewLimit)) { conv in
-                        // No `onTap` → renders as a non-interactive preview row.
-                        SessionRow(
-                            conversation: conv,
-                            isSelected: false,
-                            folderName: folderName(conv)
-                        )
-                        .padding(.horizontal, 6)
-                    }
-
-                    if hasMore {
-                        showAllFooter
-                            .padding(.horizontal, 14)
-                            .padding(.top, 4)
-                    }
+                ForEach(conversations.prefix(previewLimit)) { conv in
+                    // No `onTap` → renders as a non-interactive preview row.
+                    SessionRow(
+                        conversation: conv,
+                        isSelected: false,
+                        folderName: folderName(conv)
+                    )
+                    // The web's conversation list is `px-1.5`; its section
+                    // header is `px-2`, so the header sits a hair further in
+                    // than the rows it labels.
+                    .padding(.horizontal, WebTheme.Space.onePointFive)
                 }
-                .padding(.bottom, 12)
+
+                if hasMore {
+                    showAllFooter
+                        .padding(.horizontal, WebTheme.Space.two)
+                        .padding(.top, WebTheme.Space.one)
+                }
             }
+            .padding(.bottom, WebTheme.Space.three)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -57,45 +65,25 @@ struct SessionSectionCard: View {
         .accessibilityHint("Opens the full list")
     }
 
-    /// "N sessions total" eyebrow shown above the title — mirrors the fullscreen
-    /// drill-in (``SessionSectionFullScreen``) so a card reads as a preview of the
-    /// very screen it zoom-expands into.
-    private var totalLabel: LocalizedStringKey {
-        let n = conversations.count
-        return n == 1 ? "1 session total" : "\(n) sessions total"
-    }
-
-    /// A bigger, left-aligned title with a small tinted count eyebrow above it and
-    /// no leading icon — the editorial-card look, matching the fullscreen header.
+    /// The web's section header: the group's name at the list's own 14pt, in
+    /// `sidebar-foreground/50`, with a running total as the trailing count pill
+    /// the sidebar puts at the end of a nav row. The chevron stands in for the
+    /// web's disclosure — here it opens the fullscreen drill-in rather than
+    /// collapsing in place, which is what the whole group is a tap target for.
     private var header: some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(totalLabel)
-                    .font(WebTheme.sans(11, .bold))
-                    .foregroundStyle(tint)
-                    .tracking(0.8)
-                    .textCase(.uppercase)
-                Text(LocalizedStringKey(stringLiteral: title))
-                    .font(WebTheme.sans(16, .bold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            Spacer(minLength: 8)
-            // A subtle expand affordance (the whole card is tappable).
-            LucideIcon(sf: "arrow.up.left.and.arrow.down.right", size: 11)
-                .foregroundStyle(Theme.textTertiary)
+        WebSectionHeader(title: title, expanded: false) {
+            WebCountPill(count: conversations.count)
         }
     }
 
     private var showAllFooter: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: WebTheme.Space.one) {
             Spacer(minLength: 0)
             Text("Show all \(conversations.count)")
-                .font(WebTheme.sans(12, .semibold))
-                .foregroundStyle(tint)
-            LucideIcon(sf: "chevron.right", size: 11)
-                .foregroundStyle(tint)
+                .webText(.xs, .medium)
+                .foregroundStyle(WebTheme.mutedForeground)
+            LucideIcon(.chevronRight, size: WebTheme.Size.iconSmall)
+                .foregroundStyle(WebTheme.mutedForeground)
         }
     }
 }

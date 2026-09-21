@@ -20,8 +20,7 @@ struct CopyButton: View {
             }
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                    .font(WebTheme.sans(10, .semibold))
+                LucideIcon(sf: copied ? "checkmark" : "doc.on.doc", size: 10)
                 if let label {
                     Text(copied ? "Copied" : label).font(WebTheme.sans(10, .semibold))
                 }

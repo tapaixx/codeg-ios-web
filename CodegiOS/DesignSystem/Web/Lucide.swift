@@ -100,21 +100,57 @@ struct LucideIcon: View {
 /// `Label`'s web equivalent: a Lucide glyph and a `text-sm` title, at the
 /// spacing the web's menu items and nav rows use (`gap-1.5`).
 struct WebLabel: View {
-    let title: LocalizedStringKey
+    private let text: Text
     let icon: Lucide
     var iconSize: CGFloat = WebTheme.Size.icon
     var style: WebTheme.TextStyle = .sm
     /// Icons in the web's rows are `text-muted-foreground` even when the label
     /// is `foreground` — that two-tone treatment is a big part of why the
-    /// sidebar reads as calm.
+    /// sidebar reads as calm. Off, the glyph inherits the ambient
+    /// `foregroundStyle`, which is what a status label wants: the icon and its
+    /// text both go red on a failure, green on a success.
     var dimsIcon: Bool = true
+
+    /// UI copy, localized like `Label`'s own title.
+    init(
+        _ title: LocalizedStringKey,
+        icon: Lucide,
+        iconSize: CGFloat = WebTheme.Size.icon,
+        style: WebTheme.TextStyle = .sm,
+        dimsIcon: Bool = true
+    ) {
+        self.text = Text(title)
+        self.icon = icon
+        self.iconSize = iconSize
+        self.style = style
+        self.dimsIcon = dimsIcon
+    }
+
+    /// Runtime data — a path, a branch, a server's own message. Not localized,
+    /// and not run through Markdown/interpolation parsing.
+    init(
+        verbatim title: String,
+        icon: Lucide,
+        iconSize: CGFloat = WebTheme.Size.icon,
+        style: WebTheme.TextStyle = .sm,
+        dimsIcon: Bool = true
+    ) {
+        self.text = Text(verbatim: title)
+        self.icon = icon
+        self.iconSize = iconSize
+        self.style = style
+        self.dimsIcon = dimsIcon
+    }
 
     var body: some View {
         HStack(spacing: WebTheme.Space.onePointFive) {
-            LucideIcon(icon, size: iconSize)
-                .foregroundStyle(dimsIcon ? WebTheme.mutedForeground : WebTheme.foreground)
-            Text(title)
-                .webText(style)
+            if dimsIcon {
+                LucideIcon(icon, size: iconSize)
+                    .foregroundStyle(WebTheme.mutedForeground)
+            } else {
+                LucideIcon(icon, size: iconSize)
+            }
+            text.webText(style)
         }
     }
 }

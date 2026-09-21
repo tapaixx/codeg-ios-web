@@ -279,8 +279,7 @@ struct ChannelTypeAvatar: View {
     var size: CGFloat = 34
 
     var body: some View {
-        Image(systemName: type.icon)
-            .font(WebTheme.sans(size * 0.42, .semibold))
+        LucideIcon(sf: type.icon, size: size * 0.42)
             .foregroundStyle(type.tint)
             .frame(width: size, height: size)
             .background(type.tint.opacity(0.16), in: Circle())

@@ -149,8 +149,8 @@ private struct McpServerRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if server.apps.isEmpty {
-                    Label("Not assigned to any app", systemImage: "exclamationmark.triangle.fill")
-                        .font(WebTheme.sans(12))
+                    WebLabel("Not assigned to any app", icon: .triangleAlert,
+                             iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                         .foregroundStyle(Theme.danger.opacity(0.9))
                 } else {
                     FlowChips(labels: server.apps.map(\.displayName))

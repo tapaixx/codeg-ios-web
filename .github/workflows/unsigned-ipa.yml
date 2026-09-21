@@ -17,7 +17,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: unsigned-ios-${{ github.ref }}
+  # Renamed once: the previous `unsigned-ios-refs/heads/main` group jammed after a
+  # never-started self-hosted job was cancelled — every later run on main sat
+  # "pending" with zero jobs, dispatches included. A new key is a new queue.
+  group: ipa-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

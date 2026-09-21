@@ -10,8 +10,8 @@ on:
       runner:
         description: "Which macOS runner to build on"
         type: choice
-        default: self-hosted
-        options: [self-hosted, github]
+        default: github
+        options: [github, self-hosted]
 
 permissions:
   contents: write
@@ -22,11 +22,13 @@ concurrency:
 
 jobs:
   build:
-    # The org's own Apple Silicon Mac by default. It is someone's machine, so it
-    # is sometimes simply off — and a job aimed at an offline runner queues
-    # silently rather than failing. `workflow_dispatch` can therefore send a run
-    # to a GitHub-hosted runner instead; every other trigger uses the Mac.
-    runs-on: ${{ inputs.runner == 'github' && fromJSON('["macos-26"]') || fromJSON('["self-hosted","macOS","ARM64"]') }}
+    # GitHub-hosted macOS by default: it is always there, and this build is under
+    # three minutes on it. The org's own Apple Silicon Mac is someone's machine
+    # and is sometimes simply off — a job aimed at an offline runner queues
+    # silently rather than failing, which is how a release got stranded once.
+    # `workflow_dispatch` can still send a run to the Mac when it is known to be
+    # up.
+    runs-on: ${{ inputs.runner == 'self-hosted' && fromJSON('["self-hosted","macOS","ARM64"]') || fromJSON('["macos-26"]') }}
     # A self-hosted runner is a machine in someone's house. On a public repository, a workflow
     # that runs on pull requests will happily run a stranger's code on it — this is the first
     # thing GitHub's own documentation warns about. A pull request from a fork gets no runner

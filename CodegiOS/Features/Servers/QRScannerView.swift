@@ -117,8 +117,7 @@ struct QRScannerView: View {
 
     private func stateMessage(icon: String, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(WebTheme.sans(44))
+            LucideIcon(sf: icon, size: 44)
                 .foregroundStyle(.white.opacity(0.85))
             Text(title)
                 .font(WebTheme.sans(16, .semibold))
@@ -133,8 +132,7 @@ struct QRScannerView: View {
 
     private func circleButton(systemName: String, tint: Color = .white, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
-                .font(WebTheme.sans(14, .semibold))
+            LucideIcon(sf: systemName, size: 14)
                 .foregroundStyle(tint)
                 .frame(width: 40, height: 40)
                 .background(.black.opacity(0.4), in: Circle())

@@ -144,8 +144,7 @@ struct ComposeInsertSheet: View {
     private var emptyState: some View {
         centered {
             VStack(spacing: 8) {
-                Image(systemName: source.systemImage)
-                    .font(WebTheme.sans(28))
+                LucideIcon(sf: source.systemImage, size: 28)
                     .foregroundStyle(Theme.textTertiary)
                 Text(emptyMessage)
                     .font(WebTheme.sans(14))

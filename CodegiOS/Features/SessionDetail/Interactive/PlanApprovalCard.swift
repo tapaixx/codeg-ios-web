@@ -38,8 +38,7 @@ struct PlanApprovalCard: View {
             planBody
             if changesOpen { notesField }
             if failed {
-                Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(WebTheme.sans(12))
+                WebLabel("Couldn’t submit. Please try again.", icon: .circleAlert, iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                     .foregroundStyle(Theme.danger)
             }
             actions

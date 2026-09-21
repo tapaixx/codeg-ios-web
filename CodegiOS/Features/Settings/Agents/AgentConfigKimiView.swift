@@ -143,7 +143,7 @@ struct KimiConfigSection: View {
                 if !models.isEmpty { modelSuggestionsMenu }
                 Button { fetchModels() } label: {
                     if fetchingModels { ProgressView().controlSize(.small) }
-                    else { Label("Fetch", systemImage: "arrow.clockwise").labelStyle(.titleAndIcon) }
+                    else { WebLabel("Fetch", icon: .refreshCw, style: .sm.weight(.medium), dimsIcon: false) }
                 }
                 .font(WebTheme.sans(14, .medium))
                 .buttonStyle(.web(.outline)).tint(Theme.accent)
@@ -211,7 +211,7 @@ struct KimiConfigSection: View {
                 : "Authenticated via API key (codeg seeded the local gate token).")
             : "Not authenticated yet — save an API key below (or sign in) to open Kimi sessions."
         return HStack(alignment: .top, spacing: 8) {
-            Image(systemName: present ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+            LucideIcon(sf: present ? "checkmark.seal.fill" : "exclamationmark.triangle.fill", size: WebTheme.Size.icon)
                 .foregroundStyle(present ? Theme.accent : Theme.warning)
             Text(text).font(WebTheme.sans(12)).foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -222,7 +222,7 @@ struct KimiConfigSection: View {
 
     private func resultBanner(_ b: Banner) -> some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill")
+            LucideIcon(sf: b.isError ? "xmark.circle.fill" : "checkmark.circle.fill", size: WebTheme.Size.icon)
                 .foregroundStyle(b.isError ? Theme.danger : Theme.accent)
             Text(LocalizedStringKey(stringLiteral: b.text)).font(WebTheme.sans(12))
                 .foregroundStyle(b.isError ? Theme.danger : Theme.textSecondary)
@@ -257,7 +257,7 @@ struct KimiConfigSection: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 if saving { ProgressView().controlSize(.small) }
-                else { Image(systemName: "square.and.arrow.down") }
+                else { LucideIcon(.download, size: WebTheme.Size.icon) }
                 Text(title).fontWeight(.semibold)
             }
             .padding(.horizontal, 16).padding(.vertical, 5)

@@ -251,8 +251,7 @@ struct DelegationStatusRow: View {
         let duration = report.durationMs.map { DelegationModel.formatDuration($0) }
         let shortId = taskId.map { String($0.prefix(8)) }
         return HStack(spacing: 8) {
-            Image(systemName: kind == .cancel ? "xmark.circle" : "arrow.triangle.2.circlepath")
-                .font(WebTheme.sans(12, .semibold))
+            LucideIcon(sf: kind == .cancel ? "xmark.circle" : "arrow.triangle.2.circlepath", size: 12)
                 .foregroundStyle(badge.status == .err ? Theme.danger : Theme.textSecondary)
                 .frame(width: 16)
             Text(labelKey(shortId: shortId))

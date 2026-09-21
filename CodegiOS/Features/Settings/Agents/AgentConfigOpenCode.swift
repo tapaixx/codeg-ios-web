@@ -43,7 +43,7 @@ struct OpenCodeConfigSection: View {
                     providerCard(pid)
                 }
                 Button { newProviderId = ""; showAddProvider = true } label: {
-                    Label("Add Provider", systemImage: "plus").font(WebTheme.sans(14))
+                    WebLabel("Add Provider", icon: .plus, dimsIcon: false)
                 }
                 .buttonStyle(.plain).foregroundStyle(Theme.accent)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 11)
@@ -72,7 +72,7 @@ struct OpenCodeConfigSection: View {
                     Text(pid).font(WebTheme.sans(14, .semibold)).foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Button(role: .destructive) { deleteProvider(pid) } label: {
-                        Image(systemName: "trash").foregroundStyle(Theme.danger)
+                        LucideIcon(.trash2, size: WebTheme.Size.icon).foregroundStyle(Theme.danger)
                     }.buttonStyle(.plain)
                 }
                 labeled("Name") { TextField("Display name", text: providerBind(pid, "name")).ocField() }
@@ -93,12 +93,12 @@ struct OpenCodeConfigSection: View {
                             .lineLimit(1).frame(maxWidth: 110, alignment: .leading)
                         TextField("name", text: modelNameBind(pid, mid)).ocField()
                         Button { deleteModel(pid, mid) } label: {
-                            Image(systemName: "minus.circle.fill").foregroundStyle(Theme.danger.opacity(0.8))
+                            LucideIcon(.circleMinus, size: WebTheme.Size.icon).foregroundStyle(Theme.danger.opacity(0.8))
                         }.buttonStyle(.plain)
                     }
                 }
                 Button { newModelId = ""; addModelTo = pid } label: {
-                    Label("Add Model", systemImage: "plus").font(WebTheme.sans(12))
+                    WebLabel("Add Model", icon: .plus, iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                 }.buttonStyle(.plain).foregroundStyle(Theme.accent)
             }
         }

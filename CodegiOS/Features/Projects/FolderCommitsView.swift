@@ -196,10 +196,10 @@ private struct GitSyncHeader: View {
                 }
                 Spacer(minLength: 6)
                 if unpushedCount > 0 {
-                    Label("\(unpushedCount) unpushed", systemImage: "arrow.up.circle.fill")
-                        .font(WebTheme.sans(11, .bold))
+                    WebLabel("\(unpushedCount) unpushed", icon: .circleArrowUp,
+                             iconSize: WebTheme.Size.iconSmall,
+                             style: .xs2.weight(.bold), dimsIcon: false)
                         .foregroundStyle(Theme.warning)
-                        .labelStyle(.titleAndIcon)
                 }
             }
 
@@ -264,8 +264,7 @@ private struct CommitRow: View {
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if let pushed = entry.pushed {
-                        Image(systemName: pushed ? "cloud.fill" : "cloud")
-                            .font(WebTheme.sans(10))
+                        LucideIcon(.cloud, size: 10)
                             .foregroundStyle(pushed ? Theme.accent : Theme.textTertiary)
                             .help(pushed ? "Pushed" : "Not pushed")
                     }
@@ -388,8 +387,8 @@ struct CommitDetailView: View {
                     }
                     if let pushed = entry.pushed {
                         Spacer(minLength: 6)
-                        Label(pushed ? "Pushed" : "Local", systemImage: pushed ? "cloud.fill" : "cloud")
-                            .font(WebTheme.sans(11, .medium))
+                        WebLabel(pushed ? "Pushed" : "Local", icon: .cloud,
+                                 iconSize: WebTheme.Size.iconSmall, style: .xs2, dimsIcon: false)
                             .foregroundStyle(pushed ? Theme.accent : Theme.textTertiary)
                     }
                 }

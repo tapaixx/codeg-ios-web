@@ -35,8 +35,7 @@ struct PermissionRequestCard: View {
             }
 
             if failed {
-                Label("Couldn’t submit. Please try again.", systemImage: "exclamationmark.circle")
-                    .font(WebTheme.sans(12))
+                WebLabel("Couldn’t submit. Please try again.", icon: .circleAlert, iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false)
                     .foregroundStyle(Theme.danger)
             }
 
@@ -58,8 +57,7 @@ struct PermissionRequestCard: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: parsed.isPlan ? "list.bullet.clipboard" : "exclamationmark.shield.fill")
-                .font(WebTheme.sans(16, .semibold))
+            LucideIcon(sf: parsed.isPlan ? "list.bullet.clipboard" : "exclamationmark.shield.fill", size: 16)
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: parsed.title)
@@ -178,9 +176,11 @@ struct PermissionRequestCard: View {
 
     private func section<Content: View>(_ label: LocalizedStringKey, _ icon: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label(label, systemImage: icon)
-                .font(WebTheme.sans(12, .semibold))
-                .foregroundStyle(Theme.textSecondary)
+            HStack(spacing: WebTheme.Space.onePointFive) {
+                LucideIcon(sf: icon, size: WebTheme.Size.iconSmall)
+                Text(label).font(WebTheme.sans(12, .semibold))
+            }
+            .foregroundStyle(Theme.textSecondary)
             content()
         }
     }

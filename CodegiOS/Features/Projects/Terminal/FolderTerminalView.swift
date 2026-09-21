@@ -26,7 +26,7 @@ struct FolderTerminalView: View {
             statusLabel
             Spacer(minLength: 8)
             Button { session.dismissKeyboard() } label: {
-                Image(systemName: "keyboard.chevron.compact.down")
+                LucideIcon(.keyboardOff, size: WebTheme.Size.icon)
             }
             .tint(Theme.textSecondary)
             .accessibilityLabel("Hide Keyboard")
@@ -34,7 +34,7 @@ struct FolderTerminalView: View {
                 Button { session.clear() } label: { Label("Clear", systemImage: "clear") }
                 Button { session.restart() } label: { Label("Restart", systemImage: "arrow.clockwise") }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                LucideIcon(.ellipsis, size: WebTheme.Size.icon)
             }
             .tint(Theme.accent)
             .accessibilityLabel("Terminal Actions")
@@ -111,7 +111,7 @@ struct FolderTerminalView: View {
             Spacer()
             HStack(spacing: 12) {
                 if isError {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    LucideIcon(.triangleAlert, size: WebTheme.Size.icon)
                         .foregroundStyle(Theme.warning)
                 }
                 Text(message)

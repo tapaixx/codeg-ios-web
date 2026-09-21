@@ -130,8 +130,7 @@ struct CommitSheet: View {
             toggle(entry.path)
         } label: {
             HStack(spacing: 11) {
-                Image(systemName: selected.contains(entry.path) ? "checkmark.circle.fill" : "circle")
-                    .font(WebTheme.sans(18))
+                LucideIcon(sf: selected.contains(entry.path) ? "checkmark.circle.fill" : "circle", size: 18)
                     .foregroundStyle(selected.contains(entry.path) ? Theme.accent : Theme.textTertiary)
                 ChangeBadge(change: entry.change)
                 VStack(alignment: .leading, spacing: 2) {

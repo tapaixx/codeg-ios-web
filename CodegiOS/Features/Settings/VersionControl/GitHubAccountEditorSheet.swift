@@ -150,15 +150,15 @@ struct GitHubAccountEditorSheet: View {
 
             if let validation {
                 if validation.success {
-                    Label(validation.username.map { "@\($0)" } ?? "Valid", systemImage: "checkmark.seal.fill")
-                        .font(WebTheme.sans(12)).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
+                    WebLabel(verbatim: validation.username.map { "@\($0)" } ?? "Valid", icon: .badgeCheck,
+                             iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false).foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.38))
                     if !validation.scopes.isEmpty {
                         Text("Scopes: \(validation.scopes.joined(separator: ", "))")
                             .font(WebTheme.sans(11)).foregroundStyle(Theme.textTertiary).lineLimit(2)
                     }
                 } else {
-                    Label(validation.message ?? "Invalid token", systemImage: "xmark.octagon.fill")
-                        .font(WebTheme.sans(12)).foregroundStyle(Theme.danger)
+                    WebLabel(verbatim: validation.message ?? "Invalid token", icon: .octagonX,
+                             iconSize: WebTheme.Size.iconSmall, style: .xs, dimsIcon: false).foregroundStyle(Theme.danger)
                 }
             }
         }

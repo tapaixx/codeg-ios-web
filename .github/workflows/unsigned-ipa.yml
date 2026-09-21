@@ -16,12 +16,25 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64]
+    # A self-hosted runner is a machine in someone's house. On a public repository, a workflow
+    # that runs on pull requests will happily run a stranger's code on it — this is the first
+    # thing GitHub's own documentation warns about. A pull request from a fork gets no runner
+    # here; one from a branch of this repository, which only people with write access can push,
+    # does.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 45
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # A self-hosted runner keeps its workspace between runs, so a previous
+      # run's Codeg.app would still be sitting in build/ — and the packaging
+      # step below only checks that the app EXISTS. Start from nothing so a
+      # green run can only ever mean this commit compiled.
+      - name: Clean previous build
+        run: rm -rf build CodegiOS.xcodeproj
 
       - name: Toolchain
         run: |
@@ -92,7 +105,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v1.0.1-tapaixx.4
+          TAG: v1.0.1-tapaixx.5
           BASENAME: ${{ steps.package.outputs.basename }}
           VERSION: ${{ steps.package.outputs.version }}
           BUILD: ${{ steps.package.outputs.build }}
@@ -102,16 +115,26 @@ jobs:
           SHA="build/ipa/${BASENAME}.ipa.sha256"
 
           cat > build/release-notes.md <<EOF
-          ## Codeg iOS ${VERSION} (${BUILD}) — tapaixx Live Activity UX update
+          ## Codeg iOS ${VERSION} (${BUILD}) — tapaixx web design-system port
 
-          - Sends the Codeg token in Authorization: Bearer during the native iOS WebSocket HTTP upgrade, matching normal API requests.
-          - Advertises only the codeg-events WebSocket subprotocol instead of encoding the token into a browser-style custom subprotocol.
-          - Trims surrounding whitespace/newlines from the WebSocket token before authentication.
-          - Shows elapsed task time and meaningful phases instead of pretending an agent has a known completion percentage.
-          - Throttles system Live Activity updates so the Dynamic Island can collapse naturally after backgrounding.
-          - Tapping the system Live Activity routes to the active conversation or new task; multi-task taps open Activity.
-          - Persists only non-sensitive routing and timing hints for launch restoration.
-          - Keeps transparent post-attach reconnect, event replay, continued processing, and actionable background notifications.
+          Continues the port of the codeg web client's design system onto iOS. The
+          foundation (colour tokens, Inter/JetBrains Mono, flat surfaces) shipped in
+          the previous build; this one finishes the screens.
+
+          - Rebuilds the composer as the web's single bordered box: the "+" and the
+            send button now live *inside* the border on an action row, the field no
+            longer floats as a narrowing pill, and send is the web's paper plane with
+            a destructive Square for stop.
+          - Finishes the icon migration. Every glyph on the app's own canvas is now a
+            Lucide face from the same set the web imports; SF Symbols are kept only on
+            system surfaces (toolbars, context menus, swipe actions, the tab bar),
+            where the native glyph is the right one.
+          - Drops the editorial card around each session group. The web's sidebar has
+            no card: a group is a header over a plain column. The whole group stays a
+            single tap target for the fullscreen drill-in.
+          - Corrects the section header to the web's real treatment (14pt regular at
+            sidebar-foreground/50, not a smaller muted step).
+          - Removes the last Liquid Glass container left in the app.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

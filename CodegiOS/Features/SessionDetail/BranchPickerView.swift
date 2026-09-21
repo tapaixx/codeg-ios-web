@@ -161,7 +161,7 @@ struct BranchPickerView: View {
         } else {
             Button { showNewBranch = true } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
+                    LucideIcon(.circlePlus, size: WebTheme.Size.icon)
                         .foregroundStyle(Theme.accent)
                     Text("New Branch")
                         .font(WebTheme.sans(14, .medium))
@@ -190,7 +190,7 @@ struct BranchPickerView: View {
                 .font(WebTheme.sans(14))
             if !search.isEmpty {
                 Button { search = "" } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textTertiary)
+                    LucideIcon(.circleX, size: WebTheme.Size.icon).foregroundStyle(Theme.textTertiary)
                 }
                 .buttonStyle(.plain)
             }

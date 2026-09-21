@@ -99,7 +99,7 @@ struct CloneRepoView: View {
                         focusedField = nil
                         browserOpen = true
                     } label: {
-                        Image(systemName: "folder")
+                        LucideIcon(.folder, size: WebTheme.Size.icon)
                     }
                     .buttonStyle(.web(.outline))
                     .tint(Theme.accent)

@@ -139,9 +139,16 @@ icons. Use `WebStatusDot`.
 - **Surfaces**: every `.glassEffect` and `.buttonStyle(.glass…)` in the app is
   gone (39 sites, `scripts/port-glass-surfaces.mjs`); `CodegBackground` is a flat
   `--background` fill with no glows.
-- **Icons**: `lucide.ttf` bundled, 176 glyphs typed, 120 SF Symbols mapped; 102
-  call sites converted (`scripts/port-icons.mjs`) plus every icon the design
-  system draws itself.
+- **Icons**: `lucide.ttf` bundled, 185 glyphs typed, 142 SF Symbols mapped; the
+  codemod's 102 call sites (`scripts/port-icons.mjs`) plus the per-screen pass
+  over everything it skipped — the dynamic `Image(systemName: expr)` forms, the
+  unsized ones, and the `Label(…, systemImage:)` rewrites. **Every glyph on the
+  app's own canvas is now Lucide.** What still draws an SF Symbol is exactly the
+  system surfaces (12 toolbar buttons, 33 menu items, 10 context-menu items, 1
+  alert), the tab bar and iPad sidebar `List` rows, and two `.resizable()`
+  fallbacks (`AgentIcon`'s missing-asset path, an `AsyncImage` placeholder).
+  Every icon-name string literal in the sources now resolves through
+  `sf-to-lucide.json`, so no call site can silently land on `circleHelp`.
 - **Components**: `WebComponents.swift` ports Button (6 variants × 7 sizes),
   Badge, Card, Tabs, Switch, Input, Separator, Skeleton, the sidebar row, the
   conversation rail, the status dot, chips, section headers, and count pills.
@@ -159,42 +166,50 @@ icons. Use `WebStatusDot`.
 - **Pilot screen**: `SessionRow` is a full port of the web's
   `sidebar-conversation-card.tsx` — a 31pt pill row on a 2pt rail with the agent
   glyph on the axis and the status dot notched into it.
+- **The composer** (`ComposeBar.swift`) is the web's `codeg-composer-chrome`: one
+  `rounded-xl` box on `border-foreground/20`, holding the thumbnails, the field,
+  and an action row *inside* the border — a 24pt ghost `+` on the left, a 32pt
+  primary Send on the right, swapping to a destructive Square in flight. Focus
+  swaps the border to `--ring` and adds the 3pt `ring-ring/50`; tapping the
+  box's blank chrome focuses the field, as it does on the web. The bar no longer
+  narrows when idle — the web's composer is a box in the column, not a floating
+  pill — and the last `GlassEffectContainer` in the app went with it.
+- **Session groups** have no card. `SessionSectionCard` is now a section header
+  over a plain column, the way the web's sidebar is built; the iOS
+  zoom-to-fullscreen interaction it wraps is untouched. `WebSectionHeader` was
+  corrected to the web's real treatment while wiring it up: 14pt **regular** at
+  `sidebar-foreground/50` in a 32pt row, not the 11pt muted step this document
+  used to claim (see `sidebar-section-header.tsx`, whose own comment explains
+  that "looks a different size" was contrast, not size).
 
 ## What remains
 
-Roughly in the order that pays off:
+The icon pass, the composer and the session-list sections are done (see above).
+What is left, roughly in the order that pays off:
 
-1. **The rest of the icons.** 102 standalone `Image(systemName:)` with an
-   explicit size became `LucideIcon` (`scripts/port-icons.mjs`). What's left:
-   - ~31 `Image(systemName:)` with no explicit size — mostly toolbar `plus` and
-     `gearshape` buttons that inherit the bar's font.
-   - 90 `Label(…, systemImage:)` — a structural rewrite (`Label { } icon: { }`).
-
-   Both were left for a per-screen pass, under this rule: **system surfaces keep
-   SF Symbols, app canvas gets Lucide.** A context menu, a swipe action, and a
-   nav-bar button are UIKit chrome where an SF Symbol is the *native* glyph and a
-   Lucide one looks imported; a row, a card, a badge, or an empty state is the
-   app's own canvas, where matching the web matters.
-2. **The composer** (`ComposeBar.swift`). Its send/stop buttons went through the
-   codemod as generic pills; the web's composer
-   (`src/components/chat/message-input.tsx`, `.codeg-composer` in `globals.css`)
-   has its own chrome worth porting by hand. Highest-traffic control in the app.
-3. **The transcript** (`SessionDetail/Rendering/*`). Tool cards, diffs, and plan
-   cards now use web colors and type but keep their old geometry. The web's
-   equivalents are in `src/components/message/*`.
-4. **Session list sections** (`SessionSectionCard`, `SessionListView`) — the rows
-   are ported; the group headers and the card they sit in are not. The web's
-   list has no card at all: headers are `text-2xs` muted labels over a plain
-   `bg-sidebar` column.
-5. **Dynamic Type audit.** Fixed point sizes scale along a curve chosen per size
+1. **The transcript** (`SessionDetail/Rendering/*`). Tool cards, diffs and plan
+   cards use the web's colors, type and icons but keep their old **geometry** —
+   their own padding, radii and header layout. The web's equivalents are in
+   `src/components/message/*`. This is the largest remaining piece by far and
+   the one that still makes a transcript screenshot distinguishable from the
+   desktop's; it wants a card-by-card pass, not a codemod.
+2. **Dynamic Type audit.** Fixed point sizes scale along a curve chosen per size
    (`WebTheme.scalingStyle`); the dense rows (31pt) will need a check at the
-   larger accessibility sizes.
-6. **Touch targets.** The web's controls are 36pt and its rows 31pt, below
+   larger accessibility sizes. The composer's new 32pt/24pt action row belongs
+   in that sweep.
+3. **Touch targets.** The web's controls are 36pt and its rows 31pt, below
    Apple's 44pt guidance. Kept deliberately — it is the look being ported — but
    any control that proves hard to hit should grow its *hit area*, not its box.
-7. **Optional, if you want the whole web feature set**: the font picker (the web
+   The composer's 24pt `+` is the most exposed one.
+4. **Optional, if you want the whole web feature set**: the font picker (the web
    lets you choose the UI/editor/terminal face), the zoom levels, and the
    workspace background image with its surface-opacity slider.
+
+The rule the icon pass ran under, kept here because new screens need it:
+**system surfaces keep SF Symbols, app canvas gets Lucide.** A context menu, a
+swipe action, and a nav-bar button are UIKit chrome where an SF Symbol is the
+*native* glyph and a Lucide one looks imported; a row, a card, a badge, or an
+empty state is the app's own canvas, where matching the web matters.
 
 ## Conventions for new code
 
@@ -208,8 +223,13 @@ Roughly in the order that pays off:
 
 ## Verification status
 
-The Swift in this port has **not been compiled or run** — it was written on a
-Linux host with no Xcode. Before trusting any of it:
+This port is written on a Linux host with no Xcode, so **the only compiler that
+has ever seen it is CI** (`.github/workflows/unsigned-ipa.yml`, which builds a
+Release device app on a macOS runner). A green run means it compiles and links —
+nothing more. **Nobody has looked at these screens.** Every visual claim in this
+document is a transcription of the web's CSS, not an observation.
+
+To build it yourself:
 
 ```bash
 xcodegen generate

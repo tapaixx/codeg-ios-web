@@ -138,7 +138,7 @@ struct ChatGlobalSettingsView: View {
                     Button {
                         model.removeWebhook(id: hook.id)
                     } label: {
-                        Image(systemName: "minus.circle.fill").foregroundStyle(Theme.danger.opacity(0.8))
+                        LucideIcon(.circleMinus, size: WebTheme.Size.icon).foregroundStyle(Theme.danger.opacity(0.8))
                     }
                     .buttonStyle(.plain)
                 }
@@ -149,7 +149,7 @@ struct ChatGlobalSettingsView: View {
             Button {
                 model.addWebhook()
             } label: {
-                Label("Add Webhook", systemImage: "plus").font(WebTheme.sans(14))
+                WebLabel("Add Webhook", icon: .plus, dimsIcon: false)
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.accent)

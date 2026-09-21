@@ -185,8 +185,7 @@ struct CursorConfigSection: View {
                     UIPasteboard.general.string = CursorConfig.loginCommand(binaryPath: auth?.binaryPath)
                     copied = true
                 } label: {
-                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                        .font(WebTheme.sans(13, .semibold))
+                    LucideIcon(sf: copied ? "checkmark" : "doc.on.doc", size: 13)
                 }
                 .tint(Theme.accent)
             }
@@ -291,8 +290,8 @@ struct CursorConfigSection: View {
                     }
                 }
                 Button { rules.wrappedValue.append("") } label: {
-                    Label(addLabel, systemImage: "plus")
-                        .font(WebTheme.sans(12, .medium))
+                    WebLabel(addLabel, icon: .plus, iconSize: WebTheme.Size.iconSmall,
+                             style: .xs.weight(.medium), dimsIcon: false)
                 }
                 .tint(Theme.accent)
             }

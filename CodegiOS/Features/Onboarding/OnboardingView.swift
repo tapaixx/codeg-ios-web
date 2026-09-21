@@ -66,8 +66,7 @@ struct OnboardingView: View {
 
     private func bullet(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(WebTheme.sans(14, .semibold))
+            LucideIcon(sf: icon, size: 14)
                 .foregroundStyle(Theme.accent)
                 .frame(width: 28, height: 28)
                 .background(Theme.accentDim, in: RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous))

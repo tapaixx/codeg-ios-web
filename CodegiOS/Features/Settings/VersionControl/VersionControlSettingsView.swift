@@ -98,7 +98,7 @@ struct VersionControlSettingsView: View {
     private var gitSection: some View {
         EditorSection(title: "Git", footer: "Override the git executable path if it isn’t auto-detected.") {
             HStack(spacing: 10) {
-                Image(systemName: (model.git?.installed ?? false) ? "checkmark.circle.fill" : "xmark.circle.fill")
+                LucideIcon(sf: (model.git?.installed ?? false) ? "checkmark.circle.fill" : "xmark.circle.fill", size: WebTheme.Size.icon)
                     .foregroundStyle((model.git?.installed ?? false) ? Color(red: 0.30, green: 0.78, blue: 0.38) : Theme.danger)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(gitStatusTitle).foregroundStyle(Theme.textPrimary)

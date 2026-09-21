@@ -232,7 +232,7 @@ struct ChatChannelEditorSheet: View {
     private var weixinNote: some View {
         EditorSection(title: "Authentication", footer: "WeChat connects by scanning a QR code — open the channel after saving and tap “Scan QR to Connect”.") {
             HStack(spacing: 8) {
-                Image(systemName: "qrcode").foregroundStyle(Theme.textSecondary)
+                LucideIcon(.qrCode, size: WebTheme.Size.icon).foregroundStyle(Theme.textSecondary)
                 Text("No token needed here.").foregroundStyle(Theme.textSecondary)
                 Spacer(minLength: 0)
             }

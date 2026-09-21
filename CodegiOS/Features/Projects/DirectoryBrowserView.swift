@@ -103,7 +103,7 @@ struct DirectoryBrowserView: View {
                     Button { Task { await navigate(to: entry.path) } } label: {
                         GlassRow {
                             HStack(spacing: 12) {
-                                Image(systemName: "folder.fill")
+                                LucideIcon(.folder, size: WebTheme.Size.icon)
                                     .foregroundStyle(Theme.accent)
                                     .frame(width: 22)
                                 Text(entry.name)

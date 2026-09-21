@@ -111,6 +111,7 @@ final class RunningTurnWatcher {
         ) else { return }
 
         let stream = EventStream(baseURL: client.baseURL, token: client.token)
+        stream.turnTitle = Self.islandTitle(for: conversation)
         stream.start()
         defer { stream.close() }
 
@@ -128,5 +129,14 @@ final class RunningTurnWatcher {
                 break
             }
         }
+    }
+
+    /// The island's title line: the conversation's own title, cut to fit, or
+    /// the agent's name when the session has none yet.
+    static func islandTitle(for conversation: ConversationSummary) -> String {
+        let title = (conversation.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return conversation.agentType.displayName }
+        let firstLine = title.split(whereSeparator: \.isNewline).first.map(String.init) ?? title
+        return firstLine.count > 40 ? String(firstLine.prefix(39)) + "…" : firstLine
     }
 }

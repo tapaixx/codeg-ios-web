@@ -127,6 +127,11 @@ final class EventStream: @unchecked Sendable {
     private var networkListenerID: UUID?
     private var backgroundTurnHandle: UUID?
 
+    /// What the system Live Activity calls this turn — the conversation's
+    /// title, or the agent's name when it has none. Set before `attach`; the
+    /// island line is short, so keep it to a few words.
+    var turnTitle: String = "Codeg"
+
     /// Dedicated session for the long-lived event socket. A quiet agent turn can
     /// legitimately stay idle for minutes, so URLSession's default inactivity
     /// timeout is inappropriate here; ping/pong detects genuine socket death.
@@ -333,7 +338,8 @@ final class EventStream: @unchecked Sendable {
         coordinator.configure()
 
         if needsBackgroundTurn {
-            let handle = coordinator.beginTurn()
+            lock.lock(); let title = turnTitle; lock.unlock()
+            let handle = coordinator.beginTurn(title: title)
             lock.lock()
             if !isClosed, backgroundTurnHandle == nil {
                 backgroundTurnHandle = handle

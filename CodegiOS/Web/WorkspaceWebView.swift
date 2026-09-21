@@ -31,6 +31,7 @@ struct WorkspaceWebView: UIViewRepresentable {
         config.websiteDataStore = .default()
         config.allowsInlineMediaPlayback = true
         config.userContentController.addUserScript(Self.tokenScript(token, origin: baseURL))
+        config.userContentController.addUserScript(Self.touchScript)
 
         let webView = WKWebView(frame: .zero, configuration: config)
         Self.style(webView)
@@ -54,6 +55,9 @@ struct WorkspaceWebView: UIViewRepresentable {
         // The page is a single-page app that owns its own history; the swipe
         // gesture would only ever step backwards through `/workspace` reloads.
         webView.allowsBackForwardNavigationGestures = false
+        // No 3D-touch / long-press link preview: on a phone that is one more
+        // thing a long press can summon over the transcript.
+        webView.allowsLinkPreview = false
         // Let the page lay itself out under the status bar / home indicator: it
         // declares `viewport-fit=cover` and pads with `env(safe-area-inset-*)`.
         webView.scrollView.contentInsetAdjustmentBehavior = .never
@@ -96,6 +100,48 @@ struct WorkspaceWebView: UIViewRepresentable {
         """
         return WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
     }
+
+    /// Keeps a long press from opening the page's context menus on touch.
+    ///
+    /// The web client wraps the conversation panel (and file references,
+    /// images…) in Radix `ContextMenu` triggers. On touch and pen, Radix arms
+    /// a 700ms long-press timer on `pointerdown` and disarms it on the first
+    /// `pointermove`/`pointerup`/`pointercancel`. That was built for a desktop
+    /// right-click stand-in; on a phone a long press to select text or just
+    /// hold a finger still pops a menu over the transcript and drops the
+    /// composer's focus. So: after a touch `pointerdown` inside a trigger,
+    /// dispatch one zero-distance `pointermove` — the same event a jittery
+    /// finger sends anyway — and the timer is cleared before it can fire.
+    /// Mouse and trackpad (iPad) keep their real context menus. WebKit's own
+    /// callout on links and images is turned off alongside.
+    private static let touchScript = WKUserScript(
+        source: """
+        (function () {
+          var lastWasTouch = false;
+          document.addEventListener("pointerdown", function (e) {
+            lastWasTouch = e.pointerType !== "mouse";
+            if (!lastWasTouch || !e.target || !e.target.closest) return;
+            var trigger = e.target.closest('[data-slot="context-menu-trigger"]');
+            if (!trigger) return;
+            setTimeout(function () {
+              trigger.dispatchEvent(new PointerEvent("pointermove", {
+                bubbles: true, cancelable: true,
+                pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary,
+                clientX: e.clientX, clientY: e.clientY
+              }));
+            }, 0);
+          }, true);
+          document.addEventListener("contextmenu", function (e) {
+            if (lastWasTouch) { e.preventDefault(); e.stopImmediatePropagation(); }
+          }, true);
+          var style = document.createElement("style");
+          style.textContent = "a, img { -webkit-touch-callout: none; }";
+          (document.head || document.documentElement).appendChild(style);
+        })();
+        """,
+        injectionTime: .atDocumentStart,
+        forMainFrameOnly: true
+    )
 
     /// `scheme://host[:port]` the way `window.location.origin` spells it — no
     /// port when it is the scheme's default.

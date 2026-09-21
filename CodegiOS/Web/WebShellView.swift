@@ -1,30 +1,28 @@
 import SwiftUI
 
-/// The app's main screen: the selected server's web client, full-bleed, under a
-/// one-line native bar whose title is the server switcher.
+/// The app's main screen: the selected server's web client, full-bleed.
 ///
-/// That bar is the only native chrome. It exists because the web client has no
-/// notion of "which server" — a browser tab is one origin — while this app
-/// keeps several. Everything below it is the page.
+/// The only native chrome is a small server pill laid over the *middle* of the
+/// web client's own mobile title bar — the one region of that bar the page
+/// leaves empty (its left and right clusters are three buttons each; the
+/// middle is a window-drag filler). The pill is the server switcher and holds
+/// the reload action. It exists because the web client has no notion of "which
+/// server" — a browser tab is one origin — while this app keeps several.
 struct WebShellView: View {
     @Bindable var model: AppModel
 
+    /// The web title bar is `h-10`; the pill sits centered in it.
+    private static let titleBarHeight: CGFloat = 40
+    private static let pillHeight: CGFloat = 28
+
     var body: some View {
-        NavigationStack {
+        ZStack(alignment: .top) {
             content
-                .navigationTitle(model.selectedServer?.name ?? "Codeg")
-                .toolbarTitleDisplayMode(.inline)
-                .toolbarTitleMenu { serverSwitcherMenu }
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            model.reloadWeb()
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                        }
-                        .accessibilityLabel("Reload")
-                    }
-                }
+                .ignoresSafeArea()
+            if model.selectedServer != nil {
+                serverPill
+                    .padding(.top, (Self.titleBarHeight - Self.pillHeight) / 2)
+            }
         }
     }
 
@@ -40,9 +38,8 @@ struct WebShellView: View {
                 onTokenRejected: { model.tokenRejected = true }
             )
             // A new server, a new endpoint or a new token is a new page. The
-            // `reloadTick` lets the toolbar button force one for the same server.
+            // `reloadTick` lets the menu's Reload force one for the same server.
             .id("\(server.id)|\(baseURL.absoluteString)|\(token.hashValue)|\(model.reloadTick)")
-            .ignoresSafeArea(edges: .bottom)
         } else if model.selectedServer != nil {
             ColumnPlaceholder(
                 icon: "key.slash",
@@ -64,16 +61,34 @@ struct WebShellView: View {
         }
     }
 
-    @ViewBuilder
-    private var serverSwitcherMenu: some View {
-        Picker("Server", selection: $model.selectedServerID) {
-            ForEach(model.serverStore.servers) { server in
-                Text(server.name).tag(Optional(server.id))
+    /// Server name + chevron, drawn like the web bar's own text (13pt medium,
+    /// muted) on nothing, so it reads as part of the page. Width is capped to
+    /// stay clear of the page's button clusters on the narrowest phones.
+    private var serverPill: some View {
+        Menu {
+            Picker("Server", selection: $model.selectedServerID) {
+                ForEach(model.serverStore.servers) { server in
+                    Text(server.name).tag(Optional(server.id))
+                }
             }
+            Divider()
+            Button("Reload", systemImage: "arrow.clockwise") { model.reloadWeb() }
+            Button("Manage Servers…") { model.serversSheetPresented = true }
+        } label: {
+            HStack(spacing: 4) {
+                Text(model.selectedServer?.name ?? "Codeg")
+                    .font(WebTheme.sans(13, .medium))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .frame(height: Self.pillHeight)
+            .frame(maxWidth: 150)
+            .contentShape(Capsule())
         }
-        Divider()
-        Button("Manage Servers…") {
-            model.serversSheetPresented = true
-        }
+        .accessibilityLabel("Server")
     }
 }

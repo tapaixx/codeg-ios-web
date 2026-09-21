@@ -8,6 +8,17 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [0.0.2] — 2026-09-21
+
+### Changed
+
+- The native title bar is gone. The server switcher is now a small pill laid
+  over the empty middle of the web client's own mobile title bar; Reload moved
+  into its menu.
+- A long press no longer opens the page's context menus on touch (they were
+  built for right-click and stole the composer's focus on a phone). Mouse and
+  trackpad keep them. Link/image long-press previews are off too.
+
 ## [0.0.1] — 2026-09-21
 
 Version numbering starts over: this is a new app (`app.codeg.ios.web`), not a

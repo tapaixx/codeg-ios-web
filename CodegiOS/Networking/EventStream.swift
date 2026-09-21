@@ -514,21 +514,22 @@ final class EventStream: @unchecked Sendable {
         let appIsBackgrounded = UIApplication.shared.applicationState != .active
 
         switch event {
-        case .contentDelta, .thinking:
-            // This is a phase signal, not a per-token system update. The
-            // coordinator de-duplicates an unchanged "Generating reply" phase, so
-            // only the first delta after another phase (for example a tool or
-            // approval) can rewrite the Live Activity.
+        case .thinking:
+            // Phase signals, not per-token updates: the coordinator de-duplicates
+            // an unchanged phase, so only the first delta after another phase (a
+            // tool, an approval) can rewrite the Live Activity.
             if let backgroundHandle {
-                coordinator.updateTurn(backgroundHandle, subtitle: "Generating reply…")
+                coordinator.updateTurn(backgroundHandle, subtitle: "Thinking")
             }
 
-        case .toolCall(_, let title, _, _, _, _, _, _):
+        case .contentDelta:
             if let backgroundHandle {
-                coordinator.updateTurn(
-                    backgroundHandle,
-                    subtitle: title.isEmpty ? "Running a tool…" : "Running \(title)…"
-                )
+                coordinator.updateTurn(backgroundHandle, subtitle: "Writing")
+            }
+
+        case .toolCall(_, let title, let kind, _, _, _, _, _):
+            if let backgroundHandle {
+                coordinator.updateTurn(backgroundHandle, subtitle: Self.toolPhase(kind: kind, title: title))
             }
 
         case .toolCallUpdate:
@@ -538,7 +539,7 @@ final class EventStream: @unchecked Sendable {
             break
 
         case .permissionRequest(let requestID, let toolCall, let options):
-            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Waiting for permission") }
+            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Needs your permission") }
             if appIsBackgrounded {
                 coordinator.presentPermission(
                     client: client,
@@ -554,7 +555,7 @@ final class EventStream: @unchecked Sendable {
             if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Working") }
 
         case .questionRequest(let questionID, let questions):
-            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Waiting for your answer") }
+            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Has a question for you") }
             if appIsBackgrounded {
                 coordinator.presentQuestion(
                     client: client,
@@ -569,7 +570,7 @@ final class EventStream: @unchecked Sendable {
             if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Working") }
 
         case .planApprovalRequest(let approvalID, _, let planMarkdown):
-            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Waiting for plan approval") }
+            if let backgroundHandle { coordinator.updateTurn(backgroundHandle, subtitle: "Plan awaiting your review") }
             if appIsBackgrounded {
                 coordinator.presentPlanApproval(
                     client: client,
@@ -591,6 +592,23 @@ final class EventStream: @unchecked Sendable {
 
         default:
             break
+        }
+    }
+
+    /// The island's phase line for a tool call, by the ACP `kind` the agent
+    /// reports (the title is the agent's own label — a file, a command). What
+    /// the agent is *doing*, in the words a person would use.
+    static func toolPhase(kind: String, title: String) -> String {
+        let label = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        func with(_ verb: String) -> String { label.isEmpty ? verb : "\(verb) \(label)" }
+        switch kind.lowercased() {
+        case "edit", "write", "create", "delete", "move": return with("Editing")
+        case "execute", "command", "bash", "shell", "terminal": return with("Running")
+        case "read": return with("Reading")
+        case "search", "grep", "glob": return "Searching"
+        case "fetch", "web", "browser": return "Browsing the web"
+        case "think": return "Thinking"
+        default: return with("Running")
         }
     }
 

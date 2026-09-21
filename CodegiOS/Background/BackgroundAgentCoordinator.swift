@@ -340,7 +340,15 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     private func aggregateTitleLocked(now: Date) -> (title: String, subtitle: String) {
         if activeTurns.count > 1 {
-            return ("Codeg", "\(activeTurns.count) agent tasks are running")
+            // One line for several turns. A turn that needs the person comes
+            // first — that is the one worth a glance — with the rest as a count.
+            let waiting = activeTurns.values.filter { Self.isAttentionPhase($0.phase) }
+            if let first = waiting.first {
+                let others = activeTurns.count - 1
+                let more = waiting.count > 1 ? "\(waiting.count - 1) more waiting" : "\(others) more running"
+                return (first.title, "\(first.phase) · \(more)")
+            }
+            return ("Codeg", "\(activeTurns.count) tasks running")
         }
         if let only = activeTurns.values.first {
             // The navigation store is created by the session UI and can become
@@ -362,11 +370,10 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             .replacingOccurrences(of: "…", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let lower = cleaned.lowercased()
-        if lower.contains("waiting for permission")
-            || lower.contains("waiting for your answer")
-            || lower.contains("waiting for plan approval") {
-            return "Waiting for confirmation"
-        }
+        // The three waits stay distinct: what the person has to do differs.
+        if lower.contains("permission") { return "Needs your permission" }
+        if lower.contains("question") || lower.contains("your answer") { return "Has a question for you" }
+        if lower.contains("plan") { return "Plan awaiting your review" }
         if lower.contains("keeping the agent connected") || lower.contains("restoring") {
             return "Restoring connection"
         }
@@ -377,7 +384,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     }
 
     private static func isAttentionPhase(_ phase: String) -> Bool {
-        phase.lowercased().contains("waiting for confirmation")
+        let lower = phase.lowercased()
+        return lower.contains("permission") || lower.contains("question") || lower.contains("plan")
     }
 
     private static func elapsedText(from startedAt: Date, now: Date) -> String {

@@ -54,6 +54,40 @@ final class AppModel {
     /// push (compact) and a column selection (regular).
     var isCompact = false
 
+    // MARK: - Web shell
+
+    /// Where the web client should go next — set by a Live Activity tap or a
+    /// `codeg://` link, consumed by `WorkspaceWebView` as one page load.
+    var webDestination: WebDestination?
+    /// The page bounced to `/login`: the server rejected the stored token.
+    /// Cleared when the server, its endpoint or its token changes.
+    var tokenRejected = false
+    /// Bumped by the toolbar's reload button to force a fresh page load.
+    private(set) var reloadTick = 0
+
+    func reloadWeb() {
+        tokenRejected = false
+        reloadTick &+= 1
+    }
+
+    /// Resolve a conversation to the web's deep-link shape. The Live Activity
+    /// record and `codeg://conversation/<id>` carry only the id; the web client
+    /// also needs the folder and the agent (`DeepLinkBootstrap`), so this is one
+    /// round-trip. A conversation the server no longer has lands on the
+    /// workspace root, which is the web's own behavior for a stale link.
+    private func routeWeb(toConversation id: Int) {
+        guard let client = selectedClient() else { webDestination = .workspace; return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let summary = try await client.conversationDetail(id: id).summary
+                self.webDestination = .conversation(id: id, folderID: summary.folderId, agent: summary.agentType)
+            } catch {
+                self.webDestination = .workspace
+            }
+        }
+    }
+
     // MARK: - Presentation
 
     var serversSheetPresented = false
@@ -132,6 +166,10 @@ final class AppModel {
 
     private func openLiveActivityRoute(_ route: Route, serverID: ServerProfile.ID) {
         if selectedServerID != serverID { selectedServerID = serverID }
+        switch route {
+        case .conversation(let id): routeWeb(toConversation: id)
+        case .newSession, .project: webDestination = .workspace
+        }
         if isCompact {
             selectedTab = .chats
             paths[.chats] = [route]
@@ -143,6 +181,7 @@ final class AppModel {
     }
 
     private func openActivityRoot() {
+        webDestination = .workspace
         if isCompact {
             selectedTab = .activity
             paths[.activity] = []
@@ -209,6 +248,10 @@ final class AppModel {
             return
         }
         guard let route = Route.from(url: url) else { return }
+        switch route {
+        case .conversation(let id): routeWeb(toConversation: id)
+        case .newSession, .project: webDestination = .workspace
+        }
         if isCompact {
             let owner: AppTab = if case .project = route { .projects } else { .chats }
             selectedTab = owner
@@ -238,6 +281,8 @@ final class AppModel {
     /// Conversation, folder, and route identities are all endpoint-local.
     /// Dropped when the selected server changes…
     private func resetServerScopedState() {
+        webDestination = nil
+        tokenRejected = false
         selectedConversationID = nil
         pendingNewSession = nil
         paths = [:]

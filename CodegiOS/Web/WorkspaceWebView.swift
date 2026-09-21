@@ -109,32 +109,59 @@ struct WorkspaceWebView: UIViewRepresentable {
     /// `pointermove`/`pointerup`/`pointercancel`. That was built for a desktop
     /// right-click stand-in; on a phone a long press to select text or just
     /// hold a finger still pops a menu over the transcript and drops the
-    /// composer's focus. So: after a touch `pointerdown` inside a trigger,
-    /// dispatch one zero-distance `pointermove` — the same event a jittery
-    /// finger sends anyway — and the timer is cleared before it can fire.
+    /// composer's focus. Three layers, because the first attempt (a synthetic
+    /// `pointermove` alone) did not take on a device: the 700ms timer is never
+    /// scheduled in the first place, a zero-distance `pointermove` disarms it
+    /// if it was, and a `contextmenu` event never reaches the page on touch.
     /// Mouse and trackpad (iPad) keep their real context menus. WebKit's own
     /// callout on links and images is turned off alongside, and the page's
     /// floating selection toolbar is hidden on touch — see the stylesheet.
     private static let touchScript = WKUserScript(
         source: """
         (function () {
-          var lastWasTouch = false;
+          var TRIGGER = '[data-slot="context-menu-trigger"]';
+          var coarse = window.matchMedia("(hover: none) and (pointer: coarse)");
+          function trigger(e) {
+            return e.target && e.target.closest ? e.target.closest(TRIGGER) : null;
+          }
+
+          // 1. Radix arms its long press with `setTimeout(open, 700)` from inside
+          //    its pointerdown handler. While a touch pointerdown on a trigger is
+          //    being dispatched, a 700ms timer is that timer; hand back a dead id.
+          var arming = false;
+          var nativeSetTimeout = window.setTimeout;
+          window.setTimeout = function (fn, delay) {
+            if (arming && delay === 700) return 0;
+            return nativeSetTimeout.apply(window, arguments);
+          };
           document.addEventListener("pointerdown", function (e) {
-            lastWasTouch = e.pointerType !== "mouse";
-            if (!lastWasTouch || !e.target || !e.target.closest) return;
-            var trigger = e.target.closest('[data-slot="context-menu-trigger"]');
-            if (!trigger) return;
-            setTimeout(function () {
-              trigger.dispatchEvent(new PointerEvent("pointermove", {
-                bubbles: true, cancelable: true,
-                pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary,
-                clientX: e.clientX, clientY: e.clientY
-              }));
-            }, 0);
+            if (e.pointerType === "mouse" || !trigger(e)) return;
+            arming = true;
+            // Dispatch is synchronous; if something stops propagation before the
+            // bubble listener below, this still lowers the flag.
+            nativeSetTimeout.call(window, function () { arming = false; }, 0);
           }, true);
+
+          // 2. Belt and braces: after the handlers have run, a zero-distance
+          //    pointermove is what Radix disarms on.
+          document.addEventListener("pointerdown", function (e) {
+            if (!arming) return;
+            arming = false;
+            var el = trigger(e);
+            if (!el) return;
+            el.dispatchEvent(new PointerEvent("pointermove", {
+              bubbles: true, cancelable: true,
+              pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary,
+              clientX: e.clientX, clientY: e.clientY
+            }));
+          }, false);
+
+          // 3. And if WebKit reports the long press as a contextmenu event, it
+          //    never reaches the page on a touch device.
           document.addEventListener("contextmenu", function (e) {
-            if (lastWasTouch) { e.preventDefault(); e.stopImmediatePropagation(); }
+            if (coarse.matches && trigger(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
           }, true);
+
           var style = document.createElement("style");
           style.textContent =
             "a, img { -webkit-touch-callout: none; }" +
@@ -143,7 +170,7 @@ struct WorkspaceWebView: UIViewRepresentable {
             // touch it appears on top of iOS's own Copy/Look Up callout, and the
             // two fight over the selection. Touch keeps the system one.
             "@media (hover: none) and (pointer: coarse) {" +
-            "  div[role=\"toolbar\"].absolute.rounded-full.z-30 { display: none !important; }" +
+            "  div[role=\\"toolbar\\"].absolute.rounded-full.z-30 { display: none !important; }" +
             "}";
           (document.head || document.documentElement).appendChild(style);
         })();

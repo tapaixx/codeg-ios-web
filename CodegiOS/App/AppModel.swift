@@ -76,15 +76,23 @@ final class AppModel {
     /// round-trip. A conversation the server no longer has lands on the
     /// workspace root, which is the web's own behavior for a stale link.
     private func routeWeb(toConversation id: Int) {
-        guard let client = selectedClient() else { webDestination = .workspace; return }
+        guard let client = selectedClient(), let serverID = selectedServerID else {
+            webDestination = .workspace
+            return
+        }
         Task { [weak self] in
             guard let self else { return }
+            let destination: WebDestination
             do {
                 let summary = try await client.conversationDetail(id: id).summary
-                self.webDestination = .conversation(id: id, folderID: summary.folderId, agent: summary.agentType)
+                destination = .conversation(id: id, folderID: summary.folderId, agent: summary.agentType)
             } catch {
-                self.webDestination = .workspace
+                destination = .workspace
             }
+            // The lookup was for one server; if another was selected meanwhile,
+            // its ids mean nothing there.
+            guard self.selectedServerID == serverID else { return }
+            self.webDestination = destination
         }
     }
 

@@ -51,9 +51,15 @@ final class RunningTurnWatcher {
         for id in watches.keys where !live.contains(id) {
             stop(id)
         }
+        // Only sockets still open count against the cap. A finished watch is
+        // kept (see `Watch.finished`) but holds no socket, and a session that
+        // reports "in progress" with no live connection finishes at once — four
+        // of those must not starve the sessions that are actually running.
+        var open = watches.values.filter { !$0.finished }.count
         for conversation in running where watches[conversation.id] == nil {
-            guard watches.count < Self.maxConcurrent else { break }
+            guard open < Self.maxConcurrent else { break }
             start(conversation, server: server, client: client)
+            open += 1
         }
     }
 

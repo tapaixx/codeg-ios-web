@@ -1,6 +1,13 @@
 # Web-style port: bringing the codeg web client's design system to iOS
 
-> Status: **foundation landed, screen migration in progress.**
+> Status: **superseded.** The app now shows the web client itself in a
+> `WKWebView` (see the README); the native screens this document restyles are
+> no longer reachable and will be removed. Kept for the record of what was
+> ported and why the approach was abandoned: a component-by-component
+> transcription can match the web's tokens but never its geometry, and it
+> chases a moving target.
+>
+> Original status: foundation landed, screen migration in progress.
 > Source of truth for the visual language is the web client
 > (`xintaofei/codeg`), not this document — when they disagree, the web wins and
 > this document is stale.

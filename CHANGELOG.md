@@ -10,6 +10,19 @@ the text as the git tag message and the GitHub Release notes.
 
 ## [Unreleased]
 
+### Changed
+
+- **The app now shows the codeg web client** (`/workspace` from the selected
+  server, in a `WKWebView`) instead of native SwiftUI screens. The token is
+  injected before the page loads; same-origin navigation stays in-app,
+  everything else opens in Safari; a rejected token surfaces as a native
+  "edit the server" state rather than the page's login form.
+- Live Activity, continued processing and background notifications are now
+  driven by `RunningTurnWatcher`, a native attach to each running session's ACP
+  connection, so they work regardless of which client started the turn.
+- Live Activity taps and `codeg://conversation/<id>` links open the
+  conversation through the web client's own deep-link query.
+
 ### Added
 
 - iOS 26 continued-processing support for user-started live agent streams.

@@ -1,30 +1,38 @@
-# Codeg for iOS — web style
+# Codeg for iOS — web client shell
 
-A native, universal (iPhone + iPad) SwiftUI client for the [codeg](https://github.com/xintaofei/codeg)
-multi-agent coding server. Manage your codeg servers, browse their sessions, read
-the full transcript, and reply to the agent with the response streaming back in
-real time.
+An iPhone + iPad app for the [codeg](https://github.com/xintaofei/codeg)
+multi-agent coding server. **The screens are the codeg web client's** — the
+app loads `http(s)://your-server/workspace` in a `WKWebView`, the same page a
+phone browser shows, so what you see is exactly the web client at whatever
+version your server runs. Nothing is drawn over it.
 
-This is a fork of [codeg-ios](https://github.com/tapaixx/codeg-ios) that trades
-its Liquid Glass look for the **codeg web client's design system**: the same
-shadcn theme presets (generated from the web's `globals.css`), Inter and
-JetBrains Mono, Lucide icons, and flat bordered surfaces — so the two clients
-read as one product. The port and its status are documented in
-[`docs/web-style-port.md`](docs/web-style-port.md).
+What the app adds is what a browser tab cannot do:
 
-The app is a **pure API client** — all agent and conversation logic lives on the
-codeg backend; the app only calls its HTTP + WebSocket API.
+- **Servers and tokens** — several codeg servers, each with its token in the
+  Keychain. The token is handed to the page before its own scripts run (the web
+  client reads `localStorage["codeg_token"]`), so `/workspace` never detours
+  through `/login`. The title bar is the server switcher.
+- **Live Activity / Dynamic Island** for an in-flight agent turn, with iOS 26
+  continued processing so the turn keeps streaming after you leave the app.
+- **Actionable notifications** for permission requests, agent questions and plan
+  approvals while the app is in the background — answered from the notification
+  without opening the app.
+- **Deep links** — a Live Activity tap or a `codeg://conversation/<id>` link
+  lands the page on that conversation via the web's own
+  `/workspace?folderId&conversationId&agent` entry.
 
-## Phase 1 features
+How the background pieces work without the native transcript screen:
+`RunningTurnWatcher` polls the server's running sessions and opens a read-only
+native attach (`EventStream`) to each one's ACP connection; the existing
+`BackgroundAgentCoordinator` then does what it always did. It is blind to what
+the page is showing on purpose — a session started from the desktop gets the
+same treatment as one started on the phone.
 
-- **Server management** — add / edit / delete codeg servers (URL + token), with a
-  live connection-status check (`/api/health`). Tokens are stored in the Keychain.
-- **Session list** — conversations for a server with folder filter chips, search,
-  agent-type and status badges, model, and message counts.
-- **Session detail** — the full transcript: user/assistant/system turns, markdown,
-  reasoning, tool calls + results, images, and token-usage stats.
-- **Compose + live streaming** — send a prompt and watch the agent reply stream in
-  token-by-token over the WebSocket, with live tool-call status.
+This is a fork of [codeg-ios](https://github.com/tapaixx/codeg-ios). The
+native SwiftUI screens it inherited (and the design-system port that restyled
+them, see [`docs/web-style-port.md`](docs/web-style-port.md)) are still in the
+tree but no longer reachable; they will be removed once the shell has been
+verified on devices.
 
 ## Requirements
 

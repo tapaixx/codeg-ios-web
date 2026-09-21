@@ -137,23 +137,19 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          - Coming back from the background no longer loses the text the agent
-            streamed meanwhile: the page's event socket is reconnected on every
-            return to the foreground.
-          - A running turn is picked up within a round-trip over the server's
-            `conversation://changed` WebSocket side-channel; the 25s poll is now
-            only the safety net.
-          - The Dynamic Island stays up: the continued-processing task reports real
-            progress (it reported none, which the system expires), a turn's event
-            socket retries for up to ten minutes, and the island is titled after
-            the conversation.
-          - The native title bar is gone; the server switcher is a small pill in
-            the empty middle of the web client's own title bar, with Reload in its
-            menu.
-          - No long-press menus on touch: neither the page's context menus nor its
-            floating selection toolbar open from a long press; iOS's own selection
-            callout is the one that shows. Mouse and trackpad keep the page's.
-          - Releases are cut from a `v<version>` tag; a push to main only builds.
+          - Tapping a notification (task completed / failed, permission, question,
+            plan) opens the conversation it is about, switching servers first if
+            needed. Action buttons on notifications still answer without opening
+            the app.
+          - The Dynamic Island's phase line says what the agent is doing in plain
+            words — Thinking / Writing / Editing <file> / Running <command> /
+            Reading / Searching / Browsing — and tells the three waits apart:
+            Needs your permission / Has a question for you / Plan awaiting your
+            review. With several tasks running, one that needs you takes the first
+            line.
+          - Long-press guards moved to `window` so they bracket React's own
+            dispatch; the page's context menus no longer open from a long press on
+            touch.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

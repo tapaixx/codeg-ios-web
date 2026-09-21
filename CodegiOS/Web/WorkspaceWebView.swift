@@ -142,7 +142,14 @@ struct WorkspaceWebView: UIViewRepresentable {
             if (arming && delay === 700) return 0;
             return nativeSetTimeout.apply(window, arguments);
           };
-          document.addEventListener("pointerdown", function (e) {
+          // Listeners live on `window`, not `document`: the page is a Next.js
+          // app-router app, which hydrates on `document` itself — React's own
+          // listeners sit on the same node, and same-node listeners run in
+          // registration order. Ours register first (before the page's
+          // scripts), so on `document` our bubble listener would run BEFORE
+          // React's, i.e. before Radix has armed anything. `window` is the
+          // next node out: its capture runs first, its bubble runs last.
+          window.addEventListener("pointerdown", function (e) {
             if (e.pointerType === "mouse" || !trigger(e)) return;
             arming = true;
             // Dispatch is synchronous; if something stops propagation before the
@@ -152,7 +159,7 @@ struct WorkspaceWebView: UIViewRepresentable {
 
           // 2. Belt and braces: after the handlers have run, a zero-distance
           //    pointermove is what Radix disarms on.
-          document.addEventListener("pointerdown", function (e) {
+          window.addEventListener("pointerdown", function (e) {
             if (!arming) return;
             arming = false;
             var el = trigger(e);
@@ -166,7 +173,7 @@ struct WorkspaceWebView: UIViewRepresentable {
 
           // 3. And if WebKit reports the long press as a contextmenu event, it
           //    never reaches the page on a touch device.
-          document.addEventListener("contextmenu", function (e) {
+          window.addEventListener("contextmenu", function (e) {
             if (coarse.matches && trigger(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
           }, true);
 

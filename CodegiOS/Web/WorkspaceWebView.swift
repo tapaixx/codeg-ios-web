@@ -36,6 +36,7 @@ struct WorkspaceWebView: UIViewRepresentable {
         config.userContentController.addUserScript(Self.tokenScript(token, origin: baseURL))
         config.userContentController.addUserScript(Self.touchScript)
         config.userContentController.addUserScript(Self.resumeScript)
+        config.userContentController.addUserScript(Self.viewportScript)
 
         let webView = WKWebView(frame: .zero, configuration: config)
         Self.style(webView)
@@ -238,6 +239,33 @@ struct WorkspaceWebView: UIViewRepresentable {
         })();
         """,
         injectionTime: .atDocumentStart,
+        forMainFrameOnly: true
+    )
+
+    /// Stops the page zooming in when the composer takes focus.
+    ///
+    /// WebKit auto-zooms to any focused text field whose font is under 16px —
+    /// a Safari accessibility habit — and the web client's composer is 14px.
+    /// In a browser tab that ends with a pinch to put the page back; in an app
+    /// it just reads as the layout breaking every time the keyboard comes up.
+    /// The page's viewport is `width=device-width, initial-scale=1,
+    /// viewport-fit=cover`; pinning `maximum-scale=1` is what WebKit honours to
+    /// skip the focus zoom. Scrolling the field into view above the keyboard is
+    /// untouched. Pinch-zoom of the page goes with it, which is how a native
+    /// screen behaves anyway.
+    private static let viewportScript = WKUserScript(
+        source: """
+        (function () {
+          var meta = document.querySelector('meta[name="viewport"]');
+          if (!meta) {
+            meta = document.createElement("meta");
+            meta.name = "viewport";
+            (document.head || document.documentElement).appendChild(meta);
+          }
+          meta.content = "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover";
+        })();
+        """,
+        injectionTime: .atDocumentEnd,
         forMainFrameOnly: true
     )
 

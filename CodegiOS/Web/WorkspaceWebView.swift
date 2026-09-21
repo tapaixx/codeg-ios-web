@@ -23,6 +23,9 @@ struct WorkspaceWebView: UIViewRepresentable {
     @Binding var pendingDestination: WebDestination?
     /// Set when the page bounces to `/login`: the server rejected the token.
     let onTokenRejected: () -> Void
+    /// Bumped when the app returns to the foreground; each change makes the
+    /// page drop and rebuild its event socket (see `resumeScript`).
+    var resumeTick: Int = 0
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -32,6 +35,7 @@ struct WorkspaceWebView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.userContentController.addUserScript(Self.tokenScript(token, origin: baseURL))
         config.userContentController.addUserScript(Self.touchScript)
+        config.userContentController.addUserScript(Self.resumeScript)
 
         let webView = WKWebView(frame: .zero, configuration: config)
         Self.style(webView)
@@ -46,6 +50,10 @@ struct WorkspaceWebView: UIViewRepresentable {
 
     func updateUIView(_ webView: WKWebView, context: Context) {
         context.coordinator.parent = self
+        if context.coordinator.lastResumeTick != resumeTick {
+            context.coordinator.lastResumeTick = resumeTick
+            webView.evaluateJavaScript("window.__codegIOS && window.__codegIOS.resume && window.__codegIOS.resume();")
+        }
         guard let destination = pendingDestination else { return }
         webView.load(URLRequest(url: Self.workspaceURL(baseURL, destination: destination)))
         DispatchQueue.main.async { pendingDestination = nil }
@@ -179,6 +187,53 @@ struct WorkspaceWebView: UIViewRepresentable {
         forMainFrameOnly: true
     )
 
+    /// Makes coming back from the background cost one reconnect, not a refresh.
+    ///
+    /// iOS freezes the page while the app is in the background, and its event
+    /// socket dies with the radio. The web client only learns that from the
+    /// socket's `close` event, which WebKit delivers late (or not until TCP
+    /// gives up), and it neither pings nor watches `visibilitychange`; until
+    /// then it believes it is connected and everything the agent streamed in
+    /// the meantime never arrives. A refresh fixes it because a fresh socket
+    /// re-attaches with `since_seq` and the reconnect hooks refetch state.
+    ///
+    /// So the app tracks the page's `/ws/events` sockets and, on every return
+    /// to the foreground, closes the one that is open. That fires `close` at
+    /// once; the transport's own backoff (1s on a fresh counter), health probe
+    /// and `__ready__` do the rest — the same path a genuine drop takes.
+    private static let resumeScript = WKUserScript(
+        source: """
+        (function () {
+          var Native = window.WebSocket;
+          var sockets = [];
+          function Tracked(url, protocols) {
+            var ws = protocols === undefined ? new Native(url) : new Native(url, protocols);
+            if (String(url).indexOf("/ws/events") !== -1) {
+              sockets.push(ws);
+              ws.addEventListener("close", function () {
+                var i = sockets.indexOf(ws); if (i !== -1) sockets.splice(i, 1);
+              });
+            }
+            return ws;
+          }
+          Tracked.prototype = Native.prototype;
+          Tracked.CONNECTING = Native.CONNECTING; Tracked.OPEN = Native.OPEN;
+          Tracked.CLOSING = Native.CLOSING; Tracked.CLOSED = Native.CLOSED;
+          window.WebSocket = Tracked;
+          window.__codegIOS = window.__codegIOS || {};
+          window.__codegIOS.resume = function () {
+            sockets.slice().forEach(function (ws) {
+              if (ws.readyState === Native.OPEN || ws.readyState === Native.CONNECTING) {
+                try { ws.close(4000, "app resumed"); } catch (e) {}
+              }
+            });
+          };
+        })();
+        """,
+        injectionTime: .atDocumentStart,
+        forMainFrameOnly: true
+    )
+
     /// `scheme://host[:port]` the way `window.location.origin` spells it — no
     /// port when it is the scheme's default.
     fileprivate static func origin(of url: URL) -> String {
@@ -203,6 +258,7 @@ struct WorkspaceWebView: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         var parent: WorkspaceWebView
         weak var webView: WKWebView?
+        var lastResumeTick = 0
         /// The page's popup windows, newest last. Retained so WebKit can keep
         /// treating them as the named windows the page opened.
         private var popups: [PopupController] = []

@@ -35,7 +35,8 @@ struct WebShellView: View {
                 baseURL: baseURL,
                 token: token,
                 pendingDestination: $model.webDestination,
-                onTokenRejected: { model.tokenRejected = true }
+                onTokenRejected: { model.tokenRejected = true },
+                resumeTick: model.resumeTick
             )
             // A new server, a new endpoint or a new token is a new page. The
             // `reloadTick` lets the menu's Reload force one for the same server.

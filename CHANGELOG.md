@@ -12,6 +12,10 @@ the text as the git tag message and the GitHub Release notes.
 
 ### Changed
 
+- Coming back from the background no longer loses the text the agent streamed
+  meanwhile. The page's event socket dies with the radio but the web client
+  only hears about it late; the app now closes that socket on every return
+  to the foreground so the page reconnects (and re-syncs) at once.
 - A running turn is picked up within a round-trip: the app now listens to the
   server's global `conversation://changed` side-channel over a WebSocket
   (`ServerEventHub`) and attaches as soon as a session flips to running; the

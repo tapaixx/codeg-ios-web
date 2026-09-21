@@ -70,6 +70,14 @@ final class AppModel {
         reloadTick &+= 1
     }
 
+    /// Bumped when the scene becomes active again; the page reconnects its
+    /// event socket on each change (see `WorkspaceWebView.resumeScript`).
+    private(set) var resumeTick = 0
+
+    func webDidResume() {
+        resumeTick &+= 1
+    }
+
     /// Resolve a conversation to the web's deep-link shape. The Live Activity
     /// record and `codegweb://conversation/<id>` carry only the id; the web client
     /// also needs the folder and the agent (`DeepLinkBootstrap`), so this is one

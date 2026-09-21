@@ -48,6 +48,12 @@ struct RootView: View {
         .onChange(of: model.selectedServer?.urlString) { _, _ in
             model.selectedServerEndpointChanged()
         }
+        // Back from the background: the page's event socket is dead but it
+        // doesn't know yet; have it reconnect now rather than whenever WebKit
+        // gets around to delivering the close.
+        .onChange(of: scenePhase) { old, new in
+            if new == .active, old != .active { model.webDidResume() }
+        }
         // Closing the server editor after a token was rejected is the retry.
         .onChange(of: model.serversSheetPresented) { _, presented in
             if !presented { model.tokenRejected = false }

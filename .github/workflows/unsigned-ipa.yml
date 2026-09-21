@@ -137,26 +137,23 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          First release of Codeg Web — a native shell around the codeg web
-          client. The app loads `/workspace` from the selected server in a
-          WKWebView, the same page a phone browser shows, so the UI is exactly
-          the web client at whatever version your server runs.
-
-          - Servers and tokens stay native (Keychain); the token is handed to the
-            page before it runs, so it never shows the login form. The title bar
-            is the server switcher; a rejected token becomes an "edit the server"
-            state.
-          - Same-origin navigation stays in-app; other links open in Safari; the
-            page's commit / push / merge / settings windows open as sheets.
-          - Live Activity / Dynamic Island, continued processing and actionable
-            background notifications attach natively to every running session on
-            the server, regardless of which client started it.
-          - Live Activity taps and `codegweb://conversation/<id>` links open the
-            conversation through the web client's own deep-link query.
-
-          Bundle id `app.codeg.ios.web`, URL scheme `codegweb://` — installs beside
-          the original codeg-ios app. Version numbering starts over here; the
-          `v1.0.1-tapaixx.*` releases below belong to the earlier native app.
+          - Coming back from the background no longer loses the text the agent
+            streamed meanwhile: the page's event socket is reconnected on every
+            return to the foreground.
+          - A running turn is picked up within a round-trip over the server's
+            `conversation://changed` WebSocket side-channel; the 25s poll is now
+            only the safety net.
+          - The Dynamic Island stays up: the continued-processing task reports real
+            progress (it reported none, which the system expires), a turn's event
+            socket retries for up to ten minutes, and the island is titled after
+            the conversation.
+          - The native title bar is gone; the server switcher is a small pill in
+            the empty middle of the web client's own title bar, with Reload in its
+            menu.
+          - No long-press menus on touch: neither the page's context menus nor its
+            floating selection toolbar open from a long press; iOS's own selection
+            callout is the one that shows. Mouse and trackpad keep the page's.
+          - Releases are cut from a `v<version>` tag; a push to main only builds.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

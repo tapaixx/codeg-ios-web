@@ -8,7 +8,11 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
-## [Unreleased]
+## [0.0.1] — 2026-09-21
+
+Version numbering starts over: this is a new app (`app.codeg.ios.web`), not a
+build of the native codeg-ios client the earlier `1.0.1` entries describe.
+
 
 ### Changed
 

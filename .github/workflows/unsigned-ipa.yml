@@ -137,13 +137,13 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          - Focusing the composer no longer zooms the page in (WebKit's under-16px
-            focus zoom is off; the keyboard still scrolls the field into view).
-            Pinch-zoom of the page goes with it, as on any native screen.
-          - The Dynamic Island's ring is a clock — one lap is ten minutes of the
-            turn's wall-clock time — instead of a bar that read as a meaningless
-            percentage. The subtitle leads with the elapsed time:
-            "4 min · Editing foo.swift".
+          - Focusing the composer no longer zooms the page after the web client's
+            own zoom setting has been changed (e.g. to 80%). The viewport pin is
+            re-applied whenever the page re-renders its viewport tag, and as any
+            field takes focus.
+          - Long press works again inside the sidebar / aux / terminal drawers
+            (rename, pin, delete a conversation; a folder's new conversation). The
+            long-press guard now applies only to the transcript.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

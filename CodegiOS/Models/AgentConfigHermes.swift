@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 // Hermes config. Unlike the others, hermes saves through its own endpoint
 // (`acp_update_hermes_config`) and its `config_json` is a backend PROJECTION
@@ -89,69 +89,5 @@ extension AgentConfig {
         }
         body.baseUrl = (opt?.needsBaseUrl == true) ? .set(draft.apiBaseUrl) : .clear
         return body
-    }
-}
-
-struct HermesConfigSection: View {
-    @Binding var draft: AgentDraft
-
-    private var option: HermesProviderOption? { hermesProviders.first { $0.id == draft.hermesProvider } }
-    private var divider: some View { Divider().overlay(Theme.hairline) }
-    private var keyProviders: [HermesProviderOption] { hermesProviders.filter { $0.kind == .apiKey } }
-    private var oauthProviders: [HermesProviderOption] { hermesProviders.filter { $0.kind == .oauth } }
-    private var awsProviders: [HermesProviderOption] { hermesProviders.filter { $0.kind == .aws } }
-
-    var body: some View {
-        EditorSection(title: "Config", footer: footer) {
-            FieldRow(label: "Provider") {
-                SelectBox(display: option?.label ?? "") {
-                    Picker("", selection: Binding(get: { draft.hermesProvider }, set: setProvider)) {
-                        Section("API Key") { ForEach(keyProviders) { Text($0.label).tag($0.id) } }
-                        Section("OAuth") { ForEach(oauthProviders) { Text($0.label).tag($0.id) } }
-                        Section("AWS") { ForEach(awsProviders) { Text($0.label).tag($0.id) } }
-                    }
-                    .pickerStyle(.inline)
-                }
-            }
-            if option?.kind == .apiKey {
-                divider
-                FieldRow(label: "API Key") {
-                    SecretField(placeholder: "Leave blank to keep current", text: $draft.apiKey)
-                }
-            }
-            if option?.needsBaseUrl == true {
-                divider
-                FieldRow(label: "API URL") {
-                    TextField("https://…", text: $draft.apiBaseUrl)
-                        .font(.mono(13)).textInputAutocapitalization(.never).autocorrectionDisabled(true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            divider
-            FieldRow(label: "Model") {
-                TextField("moonshotai/kimi-k2", text: $draft.model)
-                    .font(.mono(13)).textInputAutocapitalization(.never).autocorrectionDisabled(true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var footer: LocalizedStringKey {
-        switch option?.kind {
-        case .oauth: return "This provider uses OAuth — run hermes setup on the desktop to sign in."
-        case .aws: return "Uses the AWS credential chain on the server."
-        default: return "API key is saved to ~/.hermes/.env. Leave blank to keep the stored key."
-        }
-    }
-
-    /// On provider switch, restore the key/url only when returning to the
-    /// configured provider; otherwise clear so one provider's secret never leaks
-    /// into another's env var (mirrors the web handler).
-    private func setProvider(_ value: String) {
-        let projected = AgentConfig.parseHermes(draft.configText)
-        let same = value == projected.provider
-        draft.hermesProvider = value
-        draft.apiKey = same ? projected.apiKey : ""
-        draft.apiBaseUrl = same ? projected.baseUrl : ""
     }
 }

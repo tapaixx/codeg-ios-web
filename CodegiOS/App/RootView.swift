@@ -15,7 +15,6 @@ struct RootView: View {
     @State private var model = AppModel()
     @State private var appearance = AppearanceStore()
     @State private var watcher = RunningTurnWatcher()
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -36,11 +35,7 @@ struct RootView: View {
         .preferredColorScheme(appearance.mode.colorScheme)
         .onOpenURL { model.handle(url: $0) }
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { _ in
-            model.isCompact = horizontalSizeClass == .compact
             model.handleLiveActivityLaunch()
-        }
-        .onChange(of: horizontalSizeClass, initial: true) { _, size in
-            model.isCompact = size == .compact
         }
         // If the selected server is edited in place (same UUID, new endpoint),
         // its conversation ids may no longer be valid — drop them.

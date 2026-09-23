@@ -1,17 +1,18 @@
 import SwiftUI
 import Observation
 
-/// Top-level navigation + selection state shared by both shells. Owns the
-/// server store, the compact shell's per-tab navigation paths, the regular
-/// shell's sidebar/content/detail selection, and the app-wide activity poller
-/// that feeds the Activity tab and its badge.
+/// The shell's state: which server is selected, where the web client should go
+/// next, and the app-wide activity poll that feeds the background watcher.
+///
+/// The screens are the web client's, so there is no navigation state here —
+/// a destination is a URL for the page (`webDestination`), not a pushed view.
 @MainActor
 @Observable
 final class AppModel {
     let serverStore: ServerStore
 
-    /// App-wide pulse of the selected server (running sessions, recents,
-    /// folders) — the poll-based stand-in for the future persistent event hub.
+    /// App-wide pulse of the selected server's sessions — the safety net under
+    /// `ServerEventHub` for noticing which ones are running.
     let activity = ActivityModel()
 
     // MARK: - Server selection
@@ -26,53 +27,48 @@ final class AppModel {
         }
     }
 
-    // MARK: - Regular-width (iPad) selection
+    var serversSheetPresented = false
+    var consolePresented = false
 
-    /// Detail-column selection. Mutually exclusive with `pendingNewSession`.
-    var selectedConversationID: Int?
-    /// A "new task" occupying the detail column before its conversation exists.
-    var pendingNewSession: NewSessionRequest?
-    var sidebarSection: SidebarSection? = .chats
-    /// Pushes within the content column (currently: project detail).
-    var contentPath: [Route] = []
+    init(serverStore: ServerStore? = nil) {
+        let store = serverStore ?? ServerStore()
+        self.serverStore = store
+        // Restore the last-used server, falling back to the first: the app
+        // comes up already pointed at a server.
+        let persisted = UserDefaults.standard.string(forKey: Self.lastServerKey).flatMap(UUID.init)
+        self.selectedServerID = store.servers.first { $0.id == persisted }?.id ?? store.servers.first?.id
+    }
 
-    // MARK: - Compact-width (iPhone) navigation
+    var selectedServer: ServerProfile? {
+        guard let id = selectedServerID else { return nil }
+        return serverStore.servers.first { $0.id == id }
+    }
 
-    // Typed route stacks (not opaque `NavigationPath`s) so navigation stays
-    // inspectable — `open(_:)` can no-op when the destination is already on
-    // top (e.g. tapping the running bar inside that very conversation).
-    var selectedTab: AppTab = .chats
-    var paths: [AppTab: [Route]] = [:]
-
-    /// The Settings tab's stack is value-driven over `SettingsLeaf` (its own
-    /// typed path, separate from the `Route` stacks above) so settings sub-screens
-    /// stay out of the global deep-link routing while remaining programmatically
-    /// pushable (e.g. `codegweb://settings/<slug>`).
-    var settingsPath: [SettingsLeaf] = []
-
-    /// Width class mirrored in by RootView so `open(_:)` can decide between a
-    /// push (compact) and a column selection (regular).
-    var isCompact = false
+    /// HTTP client for the selected server, if its token resolves.
+    func selectedClient() -> CodegClient? {
+        guard let server = selectedServer else { return nil }
+        return serverStore.client(for: server)
+    }
 
     // MARK: - Web shell
 
-    /// Where the web client should go next — set by a Live Activity tap or a
-    /// `codegweb://` link, consumed by `WorkspaceWebView` as one page load.
+    /// Where the web client should go next — set by a Live Activity tap, a
+    /// notification or a `codegweb://` link, consumed by `WorkspaceWebView` as
+    /// one page load.
     var webDestination: WebDestination?
     /// The page bounced to `/login`: the server rejected the stored token.
     /// Cleared when the server, its endpoint or its token changes.
     var tokenRejected = false
-    /// Bumped by the toolbar's reload button to force a fresh page load.
+    /// Bumped by the menu's Reload to force a fresh page load.
     private(set) var reloadTick = 0
+    /// Bumped when the scene becomes active again; the page reconnects its
+    /// event socket on each change (see `WorkspaceWebView.resumeScript`).
+    private(set) var resumeTick = 0
 
     func reloadWeb() {
         tokenRejected = false
         reloadTick &+= 1
     }
-
-    /// Bumped when the scene becomes active again; the page reconnects its
-    /// event socket on each change (see `WorkspaceWebView.resumeScript`).
-    private(set) var resumeTick = 0
 
     func webDidResume() {
         resumeTick &+= 1
@@ -104,166 +100,44 @@ final class AppModel {
         }
     }
 
-    // MARK: - Presentation
-
-    var serversSheetPresented = false
-    var settingsSheetPresented = false
-
-    init(serverStore: ServerStore? = nil) {
-        let store = serverStore ?? ServerStore()
-        self.serverStore = store
-        // Restore the last-used server, falling back to the first. With servers
-        // demoted out of the tab bar there is no "pick a server" landing screen
-        // anymore — the app must come up already pointed at a server.
-        let persisted = UserDefaults.standard.string(forKey: Self.lastServerKey).flatMap(UUID.init)
-        self.selectedServerID = store.servers.first { $0.id == persisted }?.id ?? store.servers.first?.id
-    }
-
-    var selectedServer: ServerProfile? {
-        guard let id = selectedServerID else { return nil }
-        return serverStore.servers.first { $0.id == id }
-    }
-
-    /// HTTP client for the selected server, if its token resolves.
-    func selectedClient() -> CodegClient? {
-        guard let server = selectedServer else { return nil }
-        return serverStore.client(for: server)
-    }
-
-    // MARK: - Routing
+    // MARK: - Entry points
 
     /// The system-owned continued-processing Live Activity has no custom URL, so
-    /// iOS launches Codeg with NSUserActivityTypeLiveActivity. Resolve the task
-    /// from our lightweight persisted routing hints instead of hijacking normal
-    /// app-icon/App-Switcher foregrounding.
+    /// iOS launches the app with NSUserActivityTypeLiveActivity. Resolve the
+    /// task from the lightweight persisted routing hints.
     func handleLiveActivityLaunch() {
         let store = BackgroundAgentNavigationStore.shared
         guard let destination = store.launchDestination() else { return }
 
         switch destination {
         case .activity:
-            openActivityRoot()
+            webDestination = .workspace
 
-        case .newSession(let recordID, let serverID, let request):
+        case .newSession(let recordID, let serverID, _):
             guard serverStore.servers.contains(where: { $0.id == serverID }) else {
                 store.invalidate(recordID)
-                openActivityRoot()
+                webDestination = .workspace
                 return
             }
-            openLiveActivityRoute(.newSession(request), serverID: serverID)
+            if selectedServerID != serverID { selectedServerID = serverID }
+            webDestination = .workspace
 
         case .conversation(let recordID, let serverID, let conversationID):
-            guard let server = serverStore.servers.first(where: { $0.id == serverID }) else {
+            guard serverStore.servers.contains(where: { $0.id == serverID }) else {
                 store.invalidate(recordID)
-                openActivityRoot()
+                webDestination = .workspace
                 return
             }
-            // The persisted record is deliberately a navigation hint. Honor
-            // the user's tap immediately instead of blocking navigation on a
-            // network round-trip; validate in the background and only unwind a
-            // destination when the server definitively says it no longer exists.
-            openLiveActivityRoute(.conversation(conversationID), serverID: serverID)
-            guard let client = serverStore.client(for: server) else { return }
-
-            Task { [weak self] in
-                guard let self else { return }
-                do {
-                    _ = try await client.conversationDetail(id: conversationID)
-                } catch {
-                    let description = String(describing: error).lowercased()
-                    if description.contains("404") || description.contains("not found") {
-                        store.invalidate(recordID)
-                        self.openActivityRoot()
-                    }
-                }
-            }
+            if selectedServerID != serverID { selectedServerID = serverID }
+            routeWeb(toConversation: conversationID)
         }
     }
 
-    private func openLiveActivityRoute(_ route: Route, serverID: ServerProfile.ID) {
-        if selectedServerID != serverID { selectedServerID = serverID }
-        switch route {
-        case .conversation(let id): routeWeb(toConversation: id)
-        case .newSession, .project: webDestination = .workspace
-        }
-        if isCompact {
-            selectedTab = .chats
-            paths[.chats] = [route]
-        } else {
-            sidebarSection = .chats
-            contentPath = []
-            open(route)
-        }
-    }
-
-    private func openActivityRoot() {
-        webDestination = .workspace
-        if isCompact {
-            selectedTab = .activity
-            paths[.activity] = []
-        } else {
-            sidebarSection = .activity
-            contentPath = []
-        }
-    }
-
-    /// Open a destination from any entry point. Compact pushes onto the current
-    /// tab's stack; regular routes to the appropriate column.
-    func open(_ route: Route) {
-        if isCompact {
-            push(route, on: selectedTab)
-            return
-        }
-        switch route {
-        case .conversation(let id):
-            pendingNewSession = nil
-            selectedConversationID = id
-        case .newSession(let request):
-            selectedConversationID = nil
-            pendingNewSession = request
-        case .project:
-            sidebarSection = .projects
-            if contentPath.last != route { contentPath.append(route) }
-        }
-    }
-
-    private func push(_ route: Route, on tab: AppTab) {
-        var path = paths[tab, default: []]
-        // Already there (e.g. the running bar tapped inside that conversation).
-        guard path.last != route else { return }
-        path.append(route)
-        paths[tab] = path
-    }
-
-    /// Handle a `codegweb://` URL. `codegweb://tab/<name>` switches tabs;
-    /// `codegweb://conversation/<id>` / `codegweb://project/<id>` land on the owning
-    /// tab with a fresh, predictable stack (so Back always returns to that
-    /// tab's root, not to wherever the user happened to be).
+    /// Handle a `codegweb://conversation/<id>[?server=<uuid>]` link (also what
+    /// a notification tap turns into). Any other `codegweb://` link opens the
+    /// workspace.
     func handle(url: URL) {
         guard url.scheme?.lowercased() == "codegweb" else { return }
-        if url.host?.lowercased() == "tab",
-           url.pathComponents.count > 1,
-           let tab = AppTab(rawValue: url.pathComponents[1].lowercased()) {
-            select(tab: tab)
-            return
-        }
-        // `codegweb://settings/<slug>` jumps straight to a Settings sub-screen (used
-        // for screenshot verification, and harmless in production). The leaf is
-        // honored on BOTH shells: compact pushes it onto the Settings tab; regular
-        // presents the Settings sheet already pushed to it (the sheet binds the
-        // same `settingsPath`).
-        if url.host?.lowercased() == "settings",
-           url.pathComponents.count > 1,
-           let leaf = SettingsLeaf(slug: url.pathComponents[1]) {
-            settingsPath = [leaf]
-            if isCompact {
-                selectedTab = .settings
-            } else {
-                settingsSheetPresented = true
-            }
-            return
-        }
-        guard let route = Route.from(url: url) else { return }
         // `?server=<uuid>` names the server the id belongs to — a notification
         // about one server can arrive while another is selected.
         if let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
@@ -273,51 +147,25 @@ final class AppModel {
            serverStore.servers.contains(where: { $0.id == serverID }) {
             selectedServerID = serverID
         }
-        switch route {
-        case .conversation(let id): routeWeb(toConversation: id)
-        case .newSession, .project: webDestination = .workspace
-        }
-        if isCompact {
-            let owner: AppTab = if case .project = route { .projects } else { .chats }
-            selectedTab = owner
-            paths[owner] = [route]
+        if case .conversation(let id)? = Route.from(url: url) {
+            routeWeb(toConversation: id)
         } else {
-            if case .project = route { contentPath = [] }
-            open(route)
-        }
-    }
-
-    private func select(tab: AppTab) {
-        if isCompact {
-            selectedTab = tab
-            return
-        }
-        switch tab {
-        case .chats, .search: sidebarSection = .chats
-        case .projects: sidebarSection = .projects
-        case .activity: sidebarSection = .activity
-        // Open Settings at its root (not whatever leaf a prior deep link left).
-        case .settings: settingsPath = []; settingsSheetPresented = true
+            webDestination = .workspace
         }
     }
 
     // MARK: - Server-scoped resets
 
-    /// Conversation, folder, and route identities are all endpoint-local.
-    /// Dropped when the selected server changes…
+    /// Conversation ids are endpoint-local. Dropped when the selected server
+    /// changes…
     private func resetServerScopedState() {
         webDestination = nil
         tokenRejected = false
-        selectedConversationID = nil
-        pendingNewSession = nil
-        paths = [:]
-        settingsPath = []
-        contentPath = []
         activity.reset()
     }
 
     /// …and when the selected server is edited in place (same UUID, new
-    /// URL/token) — the old endpoint's IDs may not exist on the new one.
+    /// URL/token) — the old endpoint's ids may not exist on the new one.
     func selectedServerEndpointChanged() {
         resetServerScopedState()
     }

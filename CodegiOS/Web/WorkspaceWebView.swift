@@ -73,7 +73,6 @@ struct WorkspaceWebView: UIViewRepresentable {
         webView.scrollView.bounces = false
         webView.isOpaque = false
         webView.backgroundColor = .clear
-        ZoomLock.attach(to: webView)
         #if DEBUG
         webView.isInspectable = true
         #endif
@@ -495,40 +494,6 @@ enum WebDestination: Equatable {
                 URLQueryItem(name: "agent", value: agent.rawValue),
             ]
         }
-    }
-}
-
-/// Keeps a web view at 1× whatever the page says.
-///
-/// WebKit zooms in on a focused text field whose font is under 16px. The
-/// viewport's `maximum-scale=1` (`viewportScript`) is meant to stop that, but
-/// iOS 26 does not honour it for focus zoom once the page's own zoom setting
-/// shrinks the composer (80% puts it near 11px) — the pin held at 100% and
-/// failed on a device at 80%. So the scroll view's `zoomScale` is watched
-/// directly and put back to 1 the moment it moves. Nothing in this app wants
-/// the page at any other scale: pinch is already off, and the page does its
-/// own zooming through its root font size.
-private final class ZoomLock: NSObject {
-    private var observation: NSKeyValueObservation?
-    private static var key: UInt8 = 0
-
-    static func attach(to webView: WKWebView) {
-        let lock = ZoomLock()
-        lock.observation = webView.scrollView.observe(\.zoomScale, options: [.new]) { scrollView, _ in
-            guard abs(scrollView.zoomScale - 1) > 0.001 else { return }
-            // Deferred one turn: resetting inside WebKit's own zoom update
-            // would be overwritten by the rest of that update.
-            DispatchQueue.main.async {
-                guard abs(scrollView.zoomScale - 1) > 0.001 else { return }
-                scrollView.setZoomScale(1, animated: false)
-                // Zooming slides the page sideways to centre the field; the
-                // page is exactly device-wide, so there is no x to keep.
-                if scrollView.contentOffset.x != 0 {
-                    scrollView.contentOffset.x = 0
-                }
-            }
-        }
-        objc_setAssociatedObject(webView, &key, lock, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 }
 

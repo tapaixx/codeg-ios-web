@@ -137,9 +137,20 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          - Focusing the composer at a page zoom below 100% (e.g. 80%) no longer
-            zooms the page in. The viewport pin alone did not hold on iOS 26; the
-            web view's own zoom scale is now held at 1.
+          - **Console** (server pill → Console): the page's console output,
+            uncaught errors and rejected promises, the app's own events (page
+            loads, event hub, background watcher), a diagnostics snapshot, and a
+            line of JavaScript to run in the page. Each focus of an editable field
+            logs what WebKit's focus-zoom decision depends on. In memory only.
+          - Focusing the composer at a page zoom below 100% no longer zooms the
+            page: on touch devices editable text is at least 16px, the size under
+            which WebKit focus-zooms. The composer's text is therefore larger than
+            the surrounding page at 80–100% zoom.
+          - A reclaimed web content process reloads the page instead of leaving it
+            blank.
+          - The native screens left over from before the web shell (about 30,000
+            lines) are gone. README now lists what the app depends on in the web
+            client and the server.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

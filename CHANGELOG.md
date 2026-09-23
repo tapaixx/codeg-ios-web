@@ -8,7 +8,7 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
-## [Unreleased]
+## [0.0.8] — 2026-09-23
 
 ### Added
 
@@ -29,7 +29,6 @@ the text as the git tag message and the GitHub Release notes.
 
 - A reclaimed web content process now reloads the page instead of leaving it
   blank.
-
 - Focusing the composer at a page zoom below 100% really no longer zooms the
   page in. On touch devices every editable field is at least 16px — WebKit
   only focus-zooms text smaller than that. Trade-off: the composer's text is

@@ -289,6 +289,21 @@ struct WorkspaceWebView: UIViewRepresentable {
           // …and synchronously as a field takes focus, which is the moment
           // WebKit reads the viewport to decide whether to zoom.
           document.addEventListener("focusin", enforce, true);
+
+          // The pin alone does not hold on iOS 26 once the page's own zoom
+          // shrinks the composer (80% puts it near 11px). WebKit only
+          // focus-zooms a field whose text is under 16px, so on touch devices
+          // every editable surface gets at least 16px — the condition that
+          // triggers the zoom never occurs. Mouse/trackpad (iPad) untouched.
+          var style = document.createElement("style");
+          style.textContent =
+            "@media (hover: none) and (pointer: coarse) {" +
+            "  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])," +
+            "  textarea, select, [contenteditable=''], [contenteditable='true'] {" +
+            "    font-size: max(16px, 1em) !important;" +
+            "  }" +
+            "}";
+          (document.head || document.documentElement).appendChild(style);
         })();
         """,
         injectionTime: .atDocumentEnd,

@@ -8,6 +8,16 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+
+- Focusing the composer at a page zoom below 100% really no longer zooms the
+  page in. On touch devices every editable field is at least 16px — WebKit
+  only focus-zooms text smaller than that. Trade-off: the composer's text is
+  larger than the surrounding page at 80–100% zoom. (0.0.6's viewport pin and
+  0.0.7's zoom-scale lock did not take on a device.)
+
 ## [0.0.7] — 2026-09-23
 
 ### Fixed

@@ -12,6 +12,10 @@ the text as the git tag message and the GitHub Release notes.
 
 ### Fixed
 
+- Focusing the composer no longer zooms the page after the web client's own
+  zoom setting has been changed (e.g. to 80%). The viewport pin is now
+  re-applied whenever the page re-renders its viewport tag, and as any field
+  takes focus.
 - Long press works again inside the sidebar / aux / terminal drawers (rename,
   pin, delete a conversation; a folder's new conversation). The long-press
   guard now applies only outside the drawers — the transcript, where a long

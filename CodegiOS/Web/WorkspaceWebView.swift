@@ -258,19 +258,36 @@ struct WorkspaceWebView: UIViewRepresentable {
     /// it just reads as the layout breaking every time the keyboard comes up.
     /// The page's viewport is `width=device-width, initial-scale=1,
     /// viewport-fit=cover`; pinning `maximum-scale=1` is what WebKit honours to
-    /// skip the focus zoom. Scrolling the field into view above the keyboard is
-    /// untouched. Pinch-zoom of the page goes with it, which is how a native
+    /// skip the focus zoom. The page's own zoom setting shrinks the root font
+    /// size (80% puts the composer near 11px), so the pin has to hold for the
+    /// life of the page, not just the first load. Scrolling the field into
+    /// view above the keyboard is untouched. Pinch-zoom of the page goes with it, which is how a native
     /// screen behaves anyway.
     private static let viewportScript = WKUserScript(
         source: """
         (function () {
-          var meta = document.querySelector('meta[name="viewport"]');
-          if (!meta) {
-            meta = document.createElement("meta");
-            meta.name = "viewport";
-            (document.head || document.documentElement).appendChild(meta);
+          var WANT = "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover";
+          function enforce() {
+            var meta = document.querySelector('meta[name="viewport"]');
+            if (!meta) {
+              meta = document.createElement("meta");
+              meta.name = "viewport";
+              (document.head || document.documentElement).appendChild(meta);
+            }
+            if (meta.content !== WANT) meta.content = WANT;
           }
-          meta.content = "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover";
+          enforce();
+          // Next.js owns the viewport tag and re-renders it on client
+          // navigation (Settings and back, a deep link clearing its query),
+          // which silently drops `maximum-scale` — so a one-shot patch was
+          // undone the first time the user changed the page zoom. Re-apply
+          // whenever the head changes…
+          new MutationObserver(enforce).observe(document.head || document.documentElement, {
+            childList: true, subtree: true, attributes: true, attributeFilter: ["content"]
+          });
+          // …and synchronously as a field takes focus, which is the moment
+          // WebKit reads the viewport to decide whether to zoom.
+          document.addEventListener("focusin", enforce, true);
         })();
         """,
         injectionTime: .atDocumentEnd,

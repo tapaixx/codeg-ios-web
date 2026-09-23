@@ -10,7 +10,25 @@ the text as the git tag message and the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- **Console** (server pill → Console): the page's console output, uncaught
+  errors and rejected promises, and the app's own events (page loads, event
+  hub, background watcher), filterable and copyable; a diagnostics snapshot;
+  and a line of JavaScript to run in the page. Each focus of an editable field
+  logs the values WebKit's focus-zoom decision depends on. In memory only.
+
+### Removed
+
+- The native SwiftUI screens (sessions, transcript, projects, settings, search,
+  activity) — unreachable since 0.0.1 — and the design-system port scripts.
+  About 30,000 lines.
+- The 0.0.7 zoom-scale observer, which never fired.
+
 ### Fixed
+
+- A reclaimed web content process now reloads the page instead of leaving it
+  blank.
 
 - Focusing the composer at a page zoom below 100% really no longer zooms the
   page in. On touch devices every editable field is at least 16px — WebKit

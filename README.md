@@ -130,25 +130,55 @@ Store Connect. To automate that text too, graduate `--archive` to Fastlane
 
 ```
 CodegiOS/
-  App/            App entry, AppModel (selection state), RootView (NavigationSplitView)
-  Models/         Codable wire models (AgentType, Conversation, Message, AcpEvent)
-  Networking/     CodegClient (HTTP), EventStream (WebSocket), JSON coding, errors
-  Persistence/    ServerProfile, Keychain, ServerStore (Observable)
-  DesignSystem/   Liquid Glass components, theme tokens, badges, state views
-  Features/       Servers, Sessions, SessionDetail (each: View + @Observable model)
+  App/            Entry point, AppModel (selected server, web destination), RootView
+  Web/            WorkspaceWebView (the WKWebView and its injected scripts), WebShellView
+  Console/        The in-app console: page + shell log, diagnostics, JS runner
+  Background/     RunningTurnWatcher, BackgroundAgentCoordinator (Live Activity,
+                  continued processing, notifications), navigation hints
+  Networking/     CodegClient (HTTP), EventStream (per-connection WebSocket),
+                  ServerEventHub (global side-channel)
+  Models/         Codable wire models (AgentType, Conversation, AcpEvent, …)
+  Persistence/    ServerProfile, Keychain, ServerStore
+  DesignSystem/   Theme and components for the remaining native screens
+  Features/       Onboarding, server management, the activity poll
 ```
 
-Key contract details handled by the networking layer:
+## What the app depends on
 
-- **Mixed JSON casing** — requests are camelCase, responses are snake_case
-  (`JSONDecoder.keyDecodingStrategy = .convertFromSnakeCase`; encoder keeps keys).
-- **Auth** — HTTP `Authorization: Bearer <token>`; WebSocket auth via the
-  `codeg-token.<base64url-no-pad>` subprotocol.
-- **Streaming** — `acp_connect` → WS attach (awaiting snapshot confirmation) →
-  `acp_prompt` → consume `content_delta` / `tool_call` / `turn_complete` events.
+The screens are the server's, so a server upgrade changes the UI without an app
+release. What an upgrade *can* break is the short list below: things the app
+reads from, writes into, or reaches around in the web client and the server.
+If something here changes upstream, the named feature stops working — nothing
+else does. The console (server pill → Console) is the first place to look.
 
-The three-column `NavigationSplitView` (servers | sessions | detail) collapses to
-a navigation stack on iPhone.
+### The web client (DOM / JS)
+
+| Contract | Used for | Where |
+|---|---|---|
+| `localStorage["codeg_token"]` | token handed to the page before it runs | `WorkspaceWebView.tokenScript` |
+| a 401 sends the page to `/login` | "Token Rejected" native state | `Coordinator.didFinish` |
+| `/workspace?folderId=&conversationId=&agent=` (`DeepLinkBootstrap`) | Live Activity, notification and `codegweb://` taps | `WebDestination` |
+| app windows open as `window.open("", name)` then navigate | commit / push / merge / settings sheets | `createWebViewWith`, `PopupController` |
+| page event socket URL contains `/ws/events` | reconnect on return from background | `resumeScript` |
+| Radix context menus: `[data-slot="context-menu-trigger"]`, arms `setTimeout(open, 700)` on touch `pointerdown` | no long-press menus in the transcript | `touchScript` |
+| drawers `[data-slot="drawer-popup"]`, open menus `[data-slot="context-menu-content"]` | long press still works there | `touchScript` |
+| selection toolbar `div[role="toolbar"].absolute.rounded-full.z-30` | hidden on touch | `touchScript` stylesheet |
+| `<meta name="viewport">` owned by Next.js | `maximum-scale=1`, re-applied on change | `viewportScript` |
+| page zoom = root `font-size` (`codeg-zoom-level`) | editable text floored at 16px on touch; diagnostics | `viewportScript`, Console |
+| web title bar is `h-10` with an empty middle | where the server pill sits | `WebShellView` |
+
+### The server (API)
+
+| Contract | Used for | Where |
+|---|---|---|
+| `/ws/events` global frames `{channel, payload}`, `conversation://changed` with `upsert` / `status` / `deleted` (server calls this "legacy") | noticing a running turn at once | `ServerEventHub` |
+| `/ws/events` attach protocol: `attach` / `detach` / `ping` → `snapshot` / `replay` / `event` / `detached`, `__ready__` | the native listener per running turn | `EventStream` |
+| ACP event names (`content_delta`, `thinking`, `tool_call`, `permission_request`, `question_request`, `plan_approval_request`, `turn_complete`, `error`, …) | Dynamic Island phase, notifications | `EventStream.observe`, `AcpEvent` |
+| `acp_find_connection_for_conversation` | which connection to attach to | `RunningTurnWatcher` |
+| conversation detail (`summary.folderId`, `agentType`) | deep-link lookup | `AppModel.routeWeb` |
+| conversation + folder lists | the 25s activity poll | `ActivityModel` |
+| `acp_respond_permission`, `acp_answer_question`, `acp_answer_plan_approval` | notification action buttons | `BackgroundAgentCoordinator` |
+| `health` | server editor's connection test | `ServerEditorModel` |
 
 ## License
 

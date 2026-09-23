@@ -129,9 +129,17 @@ struct WorkspaceWebView: UIViewRepresentable {
         source: """
         (function () {
           var TRIGGER = '[data-slot="context-menu-trigger"]';
+          // The mobile drawers (sidebar, aux panel, terminal) are the one place
+          // a long press is the ONLY way to reach a menu — a conversation
+          // card's rename/pin/delete, a folder's new-conversation — so those
+          // keep theirs. The guard is for the transcript, where a long press
+          // means "select text".
+          var KEEP = '[data-slot="drawer-popup"], [data-slot="context-menu-content"]';
           var coarse = window.matchMedia("(hover: none) and (pointer: coarse)");
           function trigger(e) {
-            return e.target && e.target.closest ? e.target.closest(TRIGGER) : null;
+            if (!e.target || !e.target.closest) return null;
+            if (e.target.closest(KEEP)) return null;
+            return e.target.closest(TRIGGER);
           }
 
           // 1. Radix arms its long press with `setTimeout(open, 700)` from inside

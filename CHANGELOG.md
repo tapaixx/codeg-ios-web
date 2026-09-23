@@ -8,6 +8,15 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+
+- Long press works again inside the sidebar / aux / terminal drawers (rename,
+  pin, delete a conversation; a folder's new conversation). The long-press
+  guard now applies only outside the drawers — the transcript, where a long
+  press means "select text".
+
 ## [0.0.5] — 2026-09-21
 
 ### Changed

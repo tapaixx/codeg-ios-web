@@ -11,9 +11,24 @@ struct ConsoleView: View {
     @State private var filter: Filter = .all
     @State private var expression = ""
     @State private var diagnostics: [(String, String)] = []
+    @State private var netQuery = ""
+    @State private var netScope: NetScope = .all
+
+    enum NetScope: String, CaseIterable {
+        case all = "All", page = "Page", app = "App", failed = "Failed", sockets = "WS"
+        func matches(_ r: AppConsole.Request) -> Bool {
+            switch self {
+            case .all: true
+            case .page: r.source == .page
+            case .app: r.source == .app
+            case .failed: r.failed
+            case .sockets: r.kind == .websocket
+            }
+        }
+    }
     @Environment(\.dismiss) private var dismiss
 
-    enum Tab: String, CaseIterable { case log = "Log", diagnostics = "Diagnostics" }
+    enum Tab: String, CaseIterable { case log = "Log", network = "Network", diagnostics = "Diagnostics" }
 
     enum Filter: String, CaseIterable {
         case all = "All", problems = "Warnings & Errors", page = "Page", app = "App"
@@ -40,6 +55,7 @@ struct ConsoleView: View {
 
                 switch tab {
                 case .log: logView
+                case .network: networkView
                 case .diagnostics: diagnosticsView
                 }
             }
@@ -55,8 +71,11 @@ struct ConsoleView: View {
                         Button("Copy All", systemImage: "doc.on.doc") {
                             UIPasteboard.general.string = console.transcript()
                         }
-                        Button("Clear", systemImage: "trash", role: .destructive) {
+                        Button("Clear Log", systemImage: "trash", role: .destructive) {
                             console.clear()
+                        }
+                        Button("Clear Network", systemImage: "trash", role: .destructive) {
+                            console.clearRequests()
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
@@ -142,6 +161,47 @@ struct ConsoleView: View {
             return text
         }
         return String(describing: value)
+    }
+
+    // MARK: - Network
+
+    private var visibleRequests: [AppConsole.Request] {
+        let q = netQuery.trimmingCharacters(in: .whitespaces).lowercased()
+        return console.requests.reversed().filter {
+            netScope.matches($0) && (q.isEmpty || $0.url.lowercased().contains(q) || $0.method.lowercased() == q)
+        }
+    }
+
+    private var networkView: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                TextField("Filter URL", text: $netQuery)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Picker("Scope", selection: $netScope) {
+                    ForEach(NetScope.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 6)
+            List(visibleRequests) { request in
+                NavigationLink {
+                    RequestDetailView(requestID: request.id)
+                } label: {
+                    RequestRow(request: request)
+                }
+                .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+            }
+            .listStyle(.plain)
+            .overlay {
+                if visibleRequests.isEmpty {
+                    ContentUnavailableView("No requests", systemImage: "network",
+                                           description: Text("Requests made after the page loaded appear here, newest first."))
+                }
+            }
+        }
     }
 
     // MARK: - Diagnostics
@@ -241,3 +301,141 @@ private struct EntryRow: View {
         }
     }
 }
+
+// MARK: - Network rows
+
+private func formatBytes(_ n: Int?) -> String {
+    guard let n else { return "–" }
+    if n < 1024 { return "\(n) B" }
+    if n < 1024 * 1024 { return String(format: "%.1f KB", Double(n) / 1024) }
+    return String(format: "%.1f MB", Double(n) / 1024 / 1024)
+}
+
+private func formatDuration(_ ms: Double?) -> String {
+    guard let ms else { return "…" }
+    return ms < 1000 ? "\(Int(ms)) ms" : String(format: "%.2f s", ms / 1000)
+}
+
+private func statusText(_ r: AppConsole.Request) -> String {
+    if r.kind == .websocket {
+        return r.error ?? (r.durationMs != nil ? "closed" : (r.status == 101 ? "open" : "…"))
+    }
+    if let error = r.error { return error }
+    return r.status.map(String.init) ?? "…"
+}
+
+private func statusColor(_ r: AppConsole.Request) -> Color {
+    if r.failed { return .red }
+    if !r.isFinished { return .secondary }
+    return .green
+}
+
+private struct RequestRow: View {
+    let request: AppConsole.Request
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(request.method)
+                    .fontWeight(.semibold)
+                Text(statusText(request))
+                    .foregroundStyle(statusColor(request))
+                Spacer(minLength: 4)
+                Text(request.kind == .websocket
+                     ? "↑\(request.sent) ↓\(request.received)"
+                     : formatDuration(request.durationMs))
+                    .foregroundStyle(.secondary)
+            }
+            .font(.system(.caption, design: .monospaced))
+            Text(Self.shortURL(request.url))
+                .font(.system(.caption, design: .monospaced))
+                .lineLimit(2)
+                .truncationMode(.middle)
+            Text("\(request.source.rawValue) · \(request.kind.rawValue) · \(formatBytes(request.responseSize))")
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Path and query; the origin is the same for nearly everything.
+    static func shortURL(_ url: String) -> String {
+        guard let u = URL(string: url), let host = u.host else { return url }
+        var s = u.path.isEmpty ? "/" : u.path
+        if let q = u.query { s += "?" + q }
+        return u.scheme?.hasPrefix("http") == true || u.scheme?.hasPrefix("ws") == true
+            ? (host == AppConsole.shared.webView?.url?.host ? s : "\(host)\(s)")
+            : url
+    }
+}
+
+private struct RequestDetailView: View {
+    let requestID: String
+    @State private var console = AppConsole.shared
+
+    private var request: AppConsole.Request? {
+        console.requests.last { $0.id == requestID }
+    }
+
+    var body: some View {
+        List {
+            if let r = request {
+                Section("General") {
+                    row("URL", r.url)
+                    row("Method", r.method)
+                    row("Status", statusText(r))
+                    row("Kind", "\(r.source.rawValue) · \(r.kind.rawValue)")
+                    row("Started", r.startedAt.formatted(date: .omitted, time: .standard))
+                    row("Duration", formatDuration(r.durationMs))
+                    row("Size", formatBytes(r.responseSize))
+                    if let type = r.contentType { row("Content-Type", type) }
+                    if r.kind == .websocket { row("Frames", "sent \(r.sent) · received \(r.received)") }
+                }
+                if let body = r.requestBody, !body.isEmpty {
+                    Section("Request body") { bodyView(body) }
+                }
+                if let body = r.responseBody, !body.isEmpty {
+                    Section("Response") { bodyView(body) }
+                }
+                if let frame = r.lastFrame {
+                    Section("Last frame") { bodyView(frame) }
+                }
+                Section {
+                    Button("Copy URL", systemImage: "link") { UIPasteboard.general.string = r.url }
+                    if let body = r.responseBody {
+                        Button("Copy Response", systemImage: "doc.on.doc") { UIPasteboard.general.string = body }
+                    }
+                }
+            } else {
+                Text("This request is no longer in the buffer.")
+            }
+        }
+        .navigationTitle(request.map { RequestRow.shortURL($0.url) } ?? "Request")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func row(_ key: String, _ value: String) -> some View {
+        LabeledContent(key) {
+            Text(value)
+                .font(.system(.footnote, design: .monospaced))
+                .multilineTextAlignment(.trailing)
+                .textSelection(.enabled)
+        }
+    }
+
+    private func bodyView(_ text: String) -> some View {
+        Text(Self.pretty(text))
+            .font(.system(.caption, design: .monospaced))
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Pretty-print JSON; anything else as-is.
+    static func pretty(_ text: String) -> String {
+        guard let data = text.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data),
+              let out = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]),
+              let s = String(data: out, encoding: .utf8) else { return text }
+        return s
+    }
+}
+

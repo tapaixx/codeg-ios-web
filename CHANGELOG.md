@@ -8,6 +8,16 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Added
+
+- **Console → Network**: the page's fetch, XHR and WebSocket traffic (frame
+  counts and the last frame), the resources it loads, and the app's own HTTP
+  calls to the server — status, timing, size, request and response bodies
+  (text only, truncated). Filter by URL, by page/app, failed, or sockets. No
+  headers are recorded, so the bearer token never appears.
+
 ## [0.0.8] — 2026-09-23
 
 ### Added

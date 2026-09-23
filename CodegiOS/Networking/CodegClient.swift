@@ -378,11 +378,20 @@ struct CodegClient: Sendable {
 
         let data: Data
         let response: URLResponse
+        let started = Date()
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw APIError.transport((error as? URLError)?.localizedDescription ?? error.localizedDescription)
+            let message = (error as? URLError)?.localizedDescription ?? error.localizedDescription
+            AppConsole.recordNative(url: url, requestBody: rawBody, status: nil, responseBody: nil,
+                                    durationMs: Date().timeIntervalSince(started) * 1000, error: message)
+            throw APIError.transport(message)
         }
+        // The shell's own calls, for the console's Network tab. The bearer
+        // token is a header, which is not recorded.
+        AppConsole.recordNative(url: url, requestBody: rawBody,
+                                status: (response as? HTTPURLResponse)?.statusCode, responseBody: data,
+                                durationMs: Date().timeIntervalSince(started) * 1000, error: nil)
 
         guard let http = response as? HTTPURLResponse else {
             throw APIError.transport("Malformed response")

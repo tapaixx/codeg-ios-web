@@ -35,6 +35,37 @@ final class AppConsole {
     }
 
     private(set) var entries: [Entry] = []
+
+    /// One request, as the Network tab shows it. Page requests are fetch, XHR,
+    /// WebSocket and resource loads observed in the page; app requests are the
+    /// shell's own HTTP calls to the server.
+    struct Request: Identifiable, Sendable {
+        enum Kind: String, Sendable { case fetch, xhr, websocket, resource, native }
+        let id: String
+        var source: Source
+        var kind: Kind
+        var method: String
+        var url: String
+        var startedAt: Date
+        var status: Int?
+        var durationMs: Double?
+        var responseSize: Int?
+        var contentType: String?
+        var requestBody: String?
+        var responseBody: String?
+        var error: String?
+        /// WebSocket frame counts.
+        var sent = 0
+        var received = 0
+        var lastFrame: String?
+
+        var isFinished: Bool { status != nil || error != nil || durationMs != nil }
+        var failed: Bool { error != nil || (status ?? 0) >= 400 }
+    }
+
+    private(set) var requests: [Request] = []
+    private static let requestCapacity = 500
+    private static let maxBodyLength = 20_000
     private static let capacity = 1000
     private static let maxMessageLength = 4000
 
@@ -52,6 +83,92 @@ final class AppConsole {
     }
 
     func clear() { entries.removeAll() }
+    func clearRequests() { requests.removeAll() }
+
+    func upsertRequest(id: String, _ update: (inout Request) -> Void, create: () -> Request) {
+        if let index = requests.lastIndex(where: { $0.id == id }) {
+            update(&requests[index])
+        } else {
+            var request = create()
+            update(&request)
+            requests.append(request)
+            if requests.count > Self.requestCapacity {
+                requests.removeFirst(requests.count - Self.requestCapacity)
+            }
+        }
+    }
+
+    static func clip(_ text: String?) -> String? {
+        guard let text else { return nil }
+        return text.count > maxBodyLength ? String(text.prefix(maxBodyLength)) + "\n… (truncated)" : text
+    }
+
+    /// Record one of the shell's own HTTP calls (from any thread).
+    nonisolated static func recordNative(
+        url: URL, requestBody: Data?, status: Int?, responseBody: Data?,
+        durationMs: Double, error: String?
+    ) {
+        let id = UUID().uuidString
+        let body = requestBody.flatMap { String(data: $0, encoding: .utf8) }
+        let response = responseBody.flatMap { String(data: $0, encoding: .utf8) }
+        let size = responseBody?.count
+        Task { @MainActor in
+            shared.upsertRequest(id: id, { r in
+                r.status = status
+                r.durationMs = durationMs
+                r.responseSize = size
+                r.requestBody = clip(body)
+                r.responseBody = clip(response)
+                r.error = error
+                r.contentType = "application/json"
+            }, create: {
+                Request(id: id, source: .app, kind: .native, method: "POST",
+                        url: url.absoluteString, startedAt: Date().addingTimeInterval(-durationMs / 1000))
+            })
+        }
+    }
+
+    /// Apply one network post from the page script.
+    func recordPage(_ body: [String: Any]) {
+        guard let id = body["id"] as? String else { return }
+        let phase = body["phase"] as? String ?? ""
+        let kind = (body["type"] as? String).flatMap(Request.Kind.init(rawValue:)) ?? .fetch
+        func int(_ key: String) -> Int? { (body[key] as? NSNumber)?.intValue }
+        func double(_ key: String) -> Double? { (body[key] as? NSNumber)?.doubleValue }
+        func string(_ key: String) -> String? { body[key] as? String }
+        upsertRequest(id: id, { r in
+            switch phase {
+            case "start":
+                r.requestBody = Self.clip(string("body"))
+            case "end":
+                r.status = int("status")
+                r.durationMs = double("duration")
+                r.responseSize = int("size")
+                r.contentType = string("contentType")
+                r.responseBody = Self.clip(string("body"))
+            case "error":
+                r.error = string("error") ?? "failed"
+                r.durationMs = double("duration")
+            case "ws-open":
+                r.status = 101
+            case "ws-send":
+                r.sent += 1; r.lastFrame = Self.clip(string("body"))
+            case "ws-message":
+                r.received += 1; r.lastFrame = Self.clip(string("body"))
+            case "ws-close":
+                r.durationMs = double("duration")
+                if let code = int("code"), code != 1000 { r.error = "closed \(code) \(string("reason") ?? "")" }
+            case "resource":
+                r.status = int("status") ?? 200
+                r.durationMs = double("duration")
+                r.responseSize = int("size")
+            default: break
+            }
+        }, create: {
+            Request(id: id, source: .page, kind: kind, method: string("method") ?? "GET",
+                    url: string("url") ?? "", startedAt: Date())
+        })
+    }
 
     /// Log from any thread.
     nonisolated static func log(_ message: String, level: Level = .log) {
@@ -83,6 +200,10 @@ final class AppConsole {
             let text = body["message"] as? String ?? ""
             let webView = message.webView
             Task { @MainActor in
+                if body["kind"] as? String == "net" {
+                    AppConsole.shared.recordPage(body)
+                    return
+                }
                 if body["kind"] as? String == "focus" {
                     // WebKit's focus zoom lands just after focus; read the
                     // native scale now and a beat later.
@@ -148,6 +269,117 @@ final class AppConsole {
               "· viewport \\"" + (meta ? meta.content : "none") + "\\""
             ]);
           }, true);
+
+          // ---- Network ----
+          var seq = 0;
+          function nid() { seq += 1; return "p" + Date.now().toString(36) + "-" + seq; }
+          function net(o) { o.kind = "net"; try { handler.postMessage(o); } catch (e) {} }
+          function abs(u) { try { return new URL(u, location.href).href; } catch (e) { return String(u); } }
+          function bodyText(b) {
+            if (b == null) return null;
+            if (typeof b === "string") return b;
+            if (b instanceof URLSearchParams) return b.toString();
+            if (typeof FormData !== "undefined" && b instanceof FormData) return "[FormData]";
+            if (b instanceof Blob) return "[Blob " + b.size + " bytes]";
+            if (b instanceof ArrayBuffer || ArrayBuffer.isView(b)) return "[binary " + (b.byteLength || 0) + " bytes]";
+            return String(b);
+          }
+          // Text bodies only, and not huge ones; binary is summarized.
+          function readable(type) { return /json|text|javascript|xml|x-www-form/.test(type || ""); }
+
+          var origFetch = window.fetch;
+          if (origFetch) {
+            window.fetch = function (input, init) {
+              var id = nid(), t0 = performance.now();
+              var url = abs(typeof input === "string" ? input : (input && input.url) || input);
+              var method = ((init && init.method) || (input && input.method) || "GET").toUpperCase();
+              net({ phase: "start", id: id, type: "fetch", method: method, url: url, body: bodyText(init && init.body) });
+              return origFetch.apply(this, arguments).then(function (res) {
+                var type = res.headers.get("content-type") || "";
+                var len = parseInt(res.headers.get("content-length") || "", 10);
+                var done = function (text, size) {
+                  net({ phase: "end", id: id, status: res.status, duration: performance.now() - t0,
+                        contentType: type, size: size, body: text });
+                };
+                if (readable(type) && !(len > 262144)) {
+                  res.clone().text().then(function (text) { done(text, text.length); }, function () { done(null, isNaN(len) ? null : len); });
+                } else {
+                  done(type ? "[" + type + "]" : null, isNaN(len) ? null : len);
+                }
+                return res;
+              }, function (err) {
+                net({ phase: "error", id: id, duration: performance.now() - t0, error: String(err && err.message || err) });
+                throw err;
+              });
+            };
+          }
+
+          var XHR = window.XMLHttpRequest;
+          if (XHR) {
+            var open = XHR.prototype.open, send = XHR.prototype.send;
+            XHR.prototype.open = function (method, url) {
+              this.__codeg = { id: nid(), method: String(method || "GET").toUpperCase(), url: abs(url) };
+              return open.apply(this, arguments);
+            };
+            XHR.prototype.send = function (body) {
+              var info = this.__codeg, xhr = this;
+              if (info) {
+                var t0 = performance.now();
+                net({ phase: "start", id: info.id, type: "xhr", method: info.method, url: info.url, body: bodyText(body) });
+                xhr.addEventListener("loadend", function () {
+                  if (xhr.status === 0) {
+                    net({ phase: "error", id: info.id, duration: performance.now() - t0, error: "network error" });
+                    return;
+                  }
+                  var type = xhr.getResponseHeader("content-type") || "";
+                  var text = null;
+                  try { if ((xhr.responseType === "" || xhr.responseType === "text") && readable(type)) text = xhr.responseText; } catch (e) {}
+                  net({ phase: "end", id: info.id, status: xhr.status, duration: performance.now() - t0,
+                        contentType: type, size: text ? text.length : null, body: text });
+                });
+              }
+              return send.apply(this, arguments);
+            };
+          }
+
+          var WS = window.WebSocket;
+          if (WS) {
+            var Wrapped = function (url, protocols) {
+              var ws = protocols === undefined ? new WS(url) : new WS(url, protocols);
+              var id = nid(), t0 = performance.now();
+              net({ phase: "start", id: id, type: "websocket", method: "WS", url: abs(url) });
+              ws.addEventListener("open", function () { net({ phase: "ws-open", id: id }); });
+              ws.addEventListener("message", function (e) {
+                net({ phase: "ws-message", id: id, body: typeof e.data === "string" ? e.data.slice(0, 2000) : "[binary]" });
+              });
+              ws.addEventListener("close", function (e) {
+                net({ phase: "ws-close", id: id, code: e.code, reason: e.reason, duration: performance.now() - t0 });
+              });
+              var s = ws.send;
+              ws.send = function (data) {
+                net({ phase: "ws-send", id: id, body: typeof data === "string" ? data.slice(0, 2000) : "[binary]" });
+                return s.apply(ws, arguments);
+              };
+              return ws;
+            };
+            Wrapped.prototype = WS.prototype;
+            Wrapped.CONNECTING = WS.CONNECTING; Wrapped.OPEN = WS.OPEN;
+            Wrapped.CLOSING = WS.CLOSING; Wrapped.CLOSED = WS.CLOSED;
+            window.WebSocket = Wrapped;
+          }
+
+          // Scripts, styles, images, fonts: what fetch/XHR don't see.
+          try {
+            new PerformanceObserver(function (list) {
+              list.getEntries().forEach(function (e) {
+                if (e.initiatorType === "fetch" || e.initiatorType === "xmlhttprequest") return;
+                var id = nid();
+                net({ phase: "start", id: id, type: "resource", method: (e.initiatorType || "GET").toUpperCase(), url: e.name });
+                net({ phase: "resource", id: id, status: e.responseStatus || 200, duration: e.duration,
+                      size: e.transferSize || e.encodedBodySize || null });
+              });
+            }).observe({ type: "resource", buffered: true });
+          } catch (e) {}
         })();
         """,
         injectionTime: .atDocumentStart,

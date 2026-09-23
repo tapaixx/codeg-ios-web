@@ -8,6 +8,14 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+
+- Focusing the composer at a page zoom below 100% (e.g. 80%) no longer zooms
+  the page in. The viewport pin alone did not hold on iOS 26; the web view's
+  own zoom scale is now held at 1.
+
 ## [0.0.6] — 2026-09-23
 
 ### Fixed

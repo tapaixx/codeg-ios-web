@@ -137,13 +137,9 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          - Focusing the composer no longer zooms the page after the web client's
-            own zoom setting has been changed (e.g. to 80%). The viewport pin is
-            re-applied whenever the page re-renders its viewport tag, and as any
-            field takes focus.
-          - Long press works again inside the sidebar / aux / terminal drawers
-            (rename, pin, delete a conversation; a folder's new conversation). The
-            long-press guard now applies only to the transcript.
+          - Focusing the composer at a page zoom below 100% (e.g. 80%) no longer
+            zooms the page in. The viewport pin alone did not hold on iOS 26; the
+            web view's own zoom scale is now held at 1.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

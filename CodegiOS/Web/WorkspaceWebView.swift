@@ -37,6 +37,8 @@ struct WorkspaceWebView: UIViewRepresentable {
         config.userContentController.addUserScript(Self.touchScript)
         config.userContentController.addUserScript(Self.resumeScript)
         config.userContentController.addUserScript(Self.viewportScript)
+        config.userContentController.addUserScript(AppConsole.pageScript)
+        config.userContentController.add(AppConsole.Bridge(), name: AppConsole.messageHandlerName)
 
         let webView = WKWebView(frame: .zero, configuration: config)
         Self.style(webView)
@@ -44,6 +46,7 @@ struct WorkspaceWebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
 
         context.coordinator.webView = webView
+        AppConsole.shared.webView = webView
         webView.load(URLRequest(url: Self.workspaceURL(baseURL, destination: pendingDestination)))
         DispatchQueue.main.async { pendingDestination = nil }
         return webView
@@ -367,12 +370,33 @@ struct WorkspaceWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            AppConsole.log("Page loaded: \(webView.url?.absoluteString ?? "?")")
             // The web client sends a rejected token here (`web-auth.ts`). The
             // app has a better place to fix that than the page's own form: the
             // server editor, which also updates the Keychain.
             if webView.url?.path.hasPrefix("/login") == true {
+                AppConsole.log("Server rejected the token (page went to /login)", level: .error)
                 parent.onTokenRejected()
             }
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            AppConsole.log("Page load failed: \(error.localizedDescription)", level: .error)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            didFailProvisionalNavigation navigation: WKNavigation!,
+            withError error: Error
+        ) {
+            AppConsole.log("Page could not load: \(error.localizedDescription)", level: .error)
+        }
+
+        /// iOS reclaims a backgrounded web view's content process under memory
+        /// pressure; the view is then blank. Reload rather than leave it so.
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            AppConsole.log("Web content process terminated; reloading", level: .warn)
+            webView.reload()
         }
 
         /// `window.open` from the page. Two callers, told apart by the request:

@@ -118,7 +118,9 @@ final class ServerEventHub: @unchecked Sendable {
         task = nil
         failures += 1
         let delay = min(30, pow(2, Double(min(failures - 1, 5))))
+        let attempt = failures
         lock.unlock()
+        AppConsole.log("Event hub disconnected; retry \(attempt) in \(Int(delay))s", level: .warn)
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.open()
         }
@@ -136,7 +138,8 @@ final class ServerEventHub: @unchecked Sendable {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let channel = obj["channel"] as? String else { return }
         // Any frame at all means the link is healthy.
-        lock.lock(); failures = 0; lock.unlock()
+        lock.lock(); let recovered = failures > 0; failures = 0; lock.unlock()
+        if recovered || channel == "__ready__" { AppConsole.log("Event hub connected") }
         guard channel == Self.channel,
               let payload = obj["payload"] as? [String: Any],
               let kind = payload["kind"] as? String else { return }

@@ -24,6 +24,9 @@ struct WebShellView: View {
                     .padding(.top, (Self.titleBarHeight - Self.pillHeight) / 2)
             }
         }
+        .sheet(isPresented: $model.consolePresented) {
+            ConsoleView(model: model)
+        }
     }
 
     @ViewBuilder
@@ -74,6 +77,7 @@ struct WebShellView: View {
             }
             Divider()
             Button("Reload", systemImage: "arrow.clockwise") { model.reloadWeb() }
+            Button("Console", systemImage: "terminal") { model.consolePresented = true }
             Button("Manage Servers…") { model.serversSheetPresented = true }
         } label: {
             HStack(spacing: 4) {

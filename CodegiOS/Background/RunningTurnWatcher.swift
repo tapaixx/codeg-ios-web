@@ -105,6 +105,7 @@ final class RunningTurnWatcher {
     }
 
     private func start(_ conversation: ConversationSummary, server: ServerProfile, client: CodegClient) {
+        AppConsole.log("Watching running session \(conversation.id): \(Self.islandTitle(for: conversation))")
         let store = BackgroundAgentNavigationStore.shared
         let handle = store.beginTask(serverID: server.id, conversationID: conversation.id, newSession: nil)
         BackgroundAgentCoordinator.shared.navigationMetadataChanged()
@@ -121,6 +122,7 @@ final class RunningTurnWatcher {
 
     private func markFinished(_ id: Int) {
         guard var watch = watches[id], !watch.finished else { return }
+        AppConsole.log("Session \(id) turn ended; watch released")
         watch.finished = true
         watches[id] = watch
         BackgroundAgentNavigationStore.shared.finishTask(watch.navigationHandle)

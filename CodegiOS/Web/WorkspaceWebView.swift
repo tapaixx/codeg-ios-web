@@ -47,7 +47,7 @@ struct WorkspaceWebView: UIViewRepresentable {
 
         context.coordinator.webView = webView
         AppConsole.shared.webView = webView
-        webView.load(URLRequest(url: Self.workspaceURL(baseURL, destination: pendingDestination)))
+        webView.load(Self.pageRequest(Self.workspaceURL(baseURL, destination: pendingDestination)))
         DispatchQueue.main.async { pendingDestination = nil }
         return webView
     }
@@ -59,7 +59,7 @@ struct WorkspaceWebView: UIViewRepresentable {
             webView.evaluateJavaScript("window.__codegIOS && window.__codegIOS.resume && window.__codegIOS.resume();")
         }
         guard let destination = pendingDestination else { return }
-        webView.load(URLRequest(url: Self.workspaceURL(baseURL, destination: destination)))
+        webView.load(Self.pageRequest(Self.workspaceURL(baseURL, destination: destination)))
         DispatchQueue.main.async { pendingDestination = nil }
     }
 
@@ -82,6 +82,14 @@ struct WorkspaceWebView: UIViewRepresentable {
     }
 
     // MARK: - URLs
+
+    /// 載入頁面時一律先向伺服器確認 HTML 是否有更新（沒變時伺服器回 304，
+    /// 不會重新下載）。沒有這一步時，WebKit 可能直接沿用快取的舊頁面：
+    /// 伺服器更新或 fork 重新部署之後，舊頁面再去按需載入的分塊已經不存在，
+    /// 頁面就會壞掉（例如切換語言時）。不依賴伺服器有沒有設 Cache-Control。
+    static func pageRequest(_ url: URL) -> URLRequest {
+        URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
+    }
 
     static func workspaceURL(_ base: URL, destination: WebDestination?) -> URL {
         var components = URLComponents(url: base.appendingPathComponent("workspace"), resolvingAgainstBaseURL: false)!

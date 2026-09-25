@@ -10,6 +10,13 @@ the text as the git tag message and the GitHub Release notes.
 
 ## [Unreleased]
 
+### Fixed
+
+- The page is always revalidated with the server when the app loads it. WebKit
+  could otherwise keep showing a cached copy after the server updated (or a
+  fork redeployed), and that stale page then failed to load the chunks it asks
+  for on demand — switching the language broke it.
+
 ### Added
 
 - **Console → Network**: the page's fetch, XHR and WebSocket traffic (frame

@@ -56,7 +56,6 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     private static let continuedIdentifierPrefix = "app.codeg.ios.web.continued.agent"
     private static let retryTTL: TimeInterval = 60
-    private static let backgroundQuietPeriod: TimeInterval = 60
     private static let systemUpdateDebounce: TimeInterval = 3
 
     private override init() {
@@ -93,21 +92,81 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             name: UIApplication.willEnterForegroundNotification,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(deviceWillLock),
+            name: UIApplication.protectedDataWillBecomeUnavailableNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(deviceDidUnlock),
+            name: UIApplication.protectedDataDidBecomeAvailableNotification,
+            object: nil
+        )
     }
 
     @objc private func applicationDidEnterBackground() {
         lock.lock()
         backgroundedAt = Date()
+        let hasTask = continuedTaskIdentifier != nil
         lock.unlock()
-        // Publish one useful state when the Dynamic Island becomes relevant, then
-        // leave it alone for at least a minute so iOS can collapse it naturally.
-        updateSystemTaskTitle(force: true)
+        // Deliberately no title update here. An update to the continued-processing
+        // Live Activity expands the Dynamic Island, and this one landed exactly as
+        // the island first appeared — it opened up on every switch away from the
+        // app and stayed open until tapped. The text was kept current while in
+        // the foreground (where the island isn't shown), so there is nothing to
+        // refresh.
+        if hasTask { AppConsole.log("Island: app in background, island left as is", level: .debug) }
     }
 
     @objc private func applicationWillEnterForeground() {
         lock.lock()
         backgroundedAt = nil
         lock.unlock()
+    }
+
+    /// A task can be submitted only from the foreground. Turns still running
+    /// when the island was ended for a lock (or expired) get a new one here, so
+    /// the next switch away from the app shows it again.
+    @objc private func applicationDidBecomeActive() {
+        ensureContinuedTask()
+    }
+
+    /// iOS lets the device sleep while a continued-processing task runs under a
+    /// lock (Apple DTS calls it a bug: FB19916760, still in iOS 26.2). The code
+    /// stops, progress goes stale, and ~30 s later the system expires the task —
+    /// which always shows "Task failed", whatever the app reports, and that entry
+    /// can't be cleared; the next turn opens another one beside it. Ending the
+    /// task here, before the data-protection lock, completes it cleanly instead.
+    /// The agent itself keeps running on the server either way.
+    @objc private func deviceWillLock() {
+        lock.lock()
+        let task = continuedTask
+        let identifier = continuedTaskIdentifier
+        continuedTask = nil
+        continuedTaskIdentifier = nil
+        continuedProgressTimer?.cancel()
+        continuedProgressTimer = nil
+        let running = activeTurns.count
+        lock.unlock()
+        guard let identifier else { return }
+        if task == nil {
+            // Submitted but not started yet: that one is still cancellable.
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
+        }
+        task?.setTaskCompleted(success: true)
+        AppConsole.log("Island: device locking, ended it cleanly (\(running) turn(s) still running; it comes back when the app is opened)", level: .info)
+    }
+
+    @objc private func deviceDidUnlock() {
+        AppConsole.log("Island: device unlocked", level: .debug)
     }
 
     // MARK: - Notification routing
@@ -135,11 +194,10 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             phase: Self.normalizedPhase(subtitle),
             startedAt: startedAt
         )
-        let shouldSubmit = continuedTaskIdentifier == nil
         lock.unlock()
 
-        if shouldSubmit { submitContinuedProcessingTask() }
-        updateSystemTaskTitle(force: true)
+        DispatchQueue.main.async { [weak self] in self?.ensureContinuedTask() }
+        updateSystemTaskTitle()
         return handle
     }
 
@@ -199,17 +257,37 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         }
         lock.unlock()
 
-        if let identifier {
+        // Cancellation applies only to a request that hasn't started; a running
+        // task ends with `setTaskCompleted` (Apple DTS).
+        if let identifier, task == nil {
             BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
         }
         task?.setTaskCompleted(success: true)
+        if identifier != nil {
+            AppConsole.log("Island: last turn finished, completed", level: .info)
+        }
         if !empty { updateSystemTaskTitle() }
     }
 
-    private func submitContinuedProcessingTask() {
+    /// Submits the one continued-processing task all active turns share, if
+    /// there are turns and no task yet. Main thread only: the foreground check
+    /// is UIKit's, and checking-then-reserving the identifier under one lock
+    /// hold is what stops two turns that begin together (several running
+    /// sessions attaching as the app opens) from each submitting a task — two
+    /// islands, one of them abandoned.
+    private func ensureContinuedTask() {
         guard UIApplication.shared.applicationState == .active else { return }
 
         let identifier = "\(Self.continuedIdentifierPrefix).\(UUID().uuidString)"
+        lock.lock()
+        guard !activeTurns.isEmpty, continuedTaskIdentifier == nil else {
+            lock.unlock()
+            return
+        }
+        continuedTaskIdentifier = identifier
+        let aggregate = aggregateTitleLocked(now: Date())
+        lock.unlock()
+
         let scheduler = BGTaskScheduler.shared
         let registered = scheduler.register(forTaskWithIdentifier: identifier, using: nil) { [weak self] task in
             guard let self, let continued = task as? BGContinuedProcessingTask else {
@@ -218,12 +296,13 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             }
             self.didStart(continued, identifier: identifier)
         }
-        guard registered else { return }
-
-        lock.lock()
-        continuedTaskIdentifier = identifier
-        let aggregate = aggregateTitleLocked(now: Date())
-        lock.unlock()
+        guard registered else {
+            lock.lock()
+            if continuedTaskIdentifier == identifier { continuedTaskIdentifier = nil }
+            lock.unlock()
+            AppConsole.log("Island: could not register the background task", level: .warn)
+            return
+        }
 
         let request = BGContinuedProcessingTaskRequest(
             identifier: identifier,
@@ -237,10 +316,12 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
         do {
             try scheduler.submit(request)
+            AppConsole.log("Island: submitted", level: .info)
         } catch {
             lock.lock()
             if continuedTaskIdentifier == identifier { continuedTaskIdentifier = nil }
             lock.unlock()
+            AppConsole.log("Island: iOS refused the background task: \(error.localizedDescription)", level: .warn)
         }
     }
 
@@ -261,9 +342,14 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         // time — fast enough to read as "alive and moving" rather than as a
         // percentage — advanced by the heartbeat below; it wraps and starts
         // the next lap.
-        // The exact figure stays in the subtitle ("4 min · Editing …").
+        // The start time stays in the subtitle ("Working · since 14:05").
         task.progress.totalUnitCount = Self.progressLapSeconds
         task.progress.completedUnitCount = 0
+        // A new task starts from the request's text; what the previous task last
+        // showed says nothing about this one, so the first update always lands.
+        lastRenderedTitle = nil
+        lastRenderedSubtitle = nil
+        lastSystemTaskUpdateAt = nil
         lock.unlock()
 
         // iOS invokes this both for system resource expiration and for a person
@@ -283,22 +369,27 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             }
             self.lock.unlock()
             task?.setTaskCompleted(success: true)
+            // iOS has already marked it failed by now (Apple DTS: the failure is
+            // posted before this handler runs and can't be changed).
+            AppConsole.log("Island: iOS expired the task (shown as failed)", level: .warn)
         }
 
         startProgressHeartbeat(for: task, identifier: identifier)
         updateSystemTaskTitle()
+        AppConsole.log("Island: started", level: .info)
     }
 
     /// One lap of the progress ring, in seconds of wall-clock time.
     private static let progressLapSeconds: Int64 = 10 * 60
-    private static let progressHeartbeat: TimeInterval = 20
+    /// iOS expires a task whose progress hasn't moved for ~30 s (Apple DTS). At
+    /// 20 s a late timer tick in the background came too close; 5 s leaves room.
+    private static let progressHeartbeat: TimeInterval = 5
 
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
-        // The progress tick is what keeps the system from expiring the task, so
-        // it runs every 20s. The title/subtitle only change at minute
-        // granularity (`updateSystemTaskTitle` de-duplicates), so the Dynamic
-        // Island is not re-expanded by the tick itself.
+        // The progress tick is what keeps the system from expiring the task. It
+        // never changes the island's text (see `updateSystemTaskTitle`), so the
+        // tick itself never expands the Dynamic Island.
         let startedAt = Date()
         timer.schedule(deadline: .now() + Self.progressHeartbeat, repeating: Self.progressHeartbeat)
         timer.setEventHandler { [weak self, weak task] in
@@ -318,20 +409,26 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         timer.resume()
     }
 
+    /// A text update expands the Dynamic Island, and this system Live Activity
+    /// was seen not to collapse again on its own (on device: it opened on every
+    /// switch away from the app and stayed open until tapped). So while the app
+    /// is in the background the text changes only when the person has to act —
+    /// a permission, a question, a plan — or no longer has to (`force`). In the
+    /// foreground the island isn't shown and updates are free; the text is
+    /// written there to be time-independent ("Working · since 14:05"), so it
+    /// never needs a refresh once the app is left.
     private func updateSystemTaskTitle(force: Bool = false) {
         let now = Date()
         lock.lock()
         guard let task = continuedTask else { lock.unlock(); return }
         let aggregate = aggregateTitleLocked(now: now)
         let duplicate = aggregate.title == lastRenderedTitle && aggregate.subtitle == lastRenderedSubtitle
-        let inBackgroundQuietPeriod = backgroundedAt.map {
-            now.timeIntervalSince($0) < Self.backgroundQuietPeriod
-        } ?? false
+        let inBackground = backgroundedAt != nil
         let tooSoon = lastSystemTaskUpdateAt.map {
             now.timeIntervalSince($0) < Self.systemUpdateDebounce
         } ?? false
 
-        if !force && (duplicate || inBackgroundQuietPeriod || tooSoon) {
+        if duplicate || (!force && (inBackground || tooSoon)) {
             lock.unlock()
             return
         }
@@ -340,6 +437,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         lastSystemTaskUpdateAt = now
         lock.unlock()
         task.updateTitle(aggregate.title, subtitle: aggregate.subtitle)
+        AppConsole.log("Island: text → \(aggregate.title) · \(aggregate.subtitle)\(inBackground ? " (background)" : "")", level: .debug)
     }
 
     private func aggregateTitleLocked(now: Date) -> (title: String, subtitle: String) {
@@ -357,17 +455,17 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         if let only = activeTurns.values.first {
             // The navigation store is created by the session UI and can become
             // available just after the transport starts. Prefer its persisted
-            // timestamp so elapsed time survives process recreation and never
+            // timestamp so the start time survives process recreation and never
             // depends on EventStream/view callback ordering.
             let startedAt = BackgroundAgentNavigationStore.shared.singleActiveStartedAt(now: now)
                 ?? only.startedAt
-            return (
-                only.title,
-                // Time first: the expanded view and the lock screen truncate a
-                // long phase ("Editing SomeLongFileName.swift"), and the figure
-                // is the thing a glance is after.
-                "\(Self.elapsedText(from: startedAt, now: now)) · \(only.phase)"
-            )
+            // A start time instead of "N min": elapsed time goes stale the moment
+            // updates stop (and in the background they do, see
+            // `updateSystemTaskTitle`); the progress ring is the running clock.
+            // Only the waits are named — a step like "Editing x.swift" would be
+            // frozen on the island long after the agent moved on.
+            let phase = Self.isAttentionPhase(only.phase) ? only.phase : "Working"
+            return (only.title, "\(phase) · since \(startedAt.formatted(date: .omitted, time: .shortened))")
         }
         return ("Codeg", "Agent task")
     }
@@ -393,14 +491,6 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private static func isAttentionPhase(_ phase: String) -> Bool {
         let lower = phase.lowercased()
         return lower.contains("permission") || lower.contains("question") || lower.contains("plan")
-    }
-
-    private static func elapsedText(from startedAt: Date, now: Date) -> String {
-        let seconds = max(0, now.timeIntervalSince(startedAt))
-        guard seconds >= 60 else { return "<1 min" }
-        let minutes = max(1, Int(seconds / 60))
-        guard minutes >= 60 else { return "\(minutes) min" }
-        return "\(minutes / 60) h \(minutes % 60) min"
     }
 
     // MARK: - Network path recovery

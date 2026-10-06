@@ -8,6 +8,35 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+
+- **Dynamic Island: "Task failed" after locking the phone.** Under a lock iOS
+  lets the device sleep while a background task runs (a bug Apple has
+  acknowledged), so progress stops and the system expires the task — which it
+  always shows as failed, whatever the app reports. The app now ends the island
+  cleanly as the phone locks and brings it back when the app is opened while
+  the agent is still working. Progress is reported every 5 s instead of 20 s,
+  well inside the system's ~30 s limit.
+- **Dynamic Island: several islands at once.** Those failed entries can't be
+  cleared and piled up beside the next one; and two turns starting together
+  (several running sessions attaching as the app opens) could each submit a
+  background task.
+- **Dynamic Island: expanded on every switch away from the app and stayed
+  open.** The app updated the island's text the moment it went to the
+  background, then every minute (elapsed time) and on every agent step. In the
+  background the text now changes only when you need to act — a permission, a
+  question, a plan. The subtitle shows the start time ("Working · since 14:05")
+  instead of minutes elapsed, so it never goes stale; the ring is still the
+  running clock.
+
+### Added
+
+- **Console**: the island's lifecycle is logged — submitted, started, expired by
+  iOS, completed, ended for a lock — so an odd island can be explained from the
+  log.
+
 ## [0.0.9] — 2026-09-24
 
 ### Fixed

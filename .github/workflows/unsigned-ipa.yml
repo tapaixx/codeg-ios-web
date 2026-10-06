@@ -137,16 +137,23 @@ jobs:
           cat > build/release-notes.md <<EOF
           ## Codeg Web for iOS ${VERSION} (${BUILD})
 
-          - **Console → Network**: the page's fetch, XHR and WebSocket traffic
-            (frame counts and the last frame), the resources it loads, and the
-            app's own HTTP calls to the server — status, timing, size, request and
-            response bodies (text only, truncated). Filter by URL, page/app,
-            failed, or sockets. Headers are never recorded, so the bearer token
-            never appears.
-          - The page is always revalidated with the server when the app loads it.
-            WebKit could otherwise keep a cached copy after the server updated (or
-            a fork redeployed), and that stale page then failed to load the chunks
-            it asks for on demand — switching the language broke it.
+          - **Dynamic Island: no more "Task failed" after locking the phone.**
+            Under a lock iOS lets the device sleep while a background task runs
+            (a bug Apple has acknowledged), so the task went stale and expired,
+            which iOS always shows as failed. The app now ends the island cleanly
+            as the phone locks and brings it back when you open the app while the
+            agent is still working. Progress is reported every 5 s instead of 20 s.
+          - **Dynamic Island: no more pile of islands.** Failed entries are no
+            longer left behind, and two turns starting together no longer submit
+            two background tasks.
+          - **Dynamic Island: no longer opens up as you switch away.** The text is
+            not touched at the moment the island appears. In the background it
+            (running time and current step) refreshes at most once a minute, and
+            at once when you need to act. If the island still keeps opening on its
+            own, turn off Console → Diagnostics → *Live island text in background*.
+          - **Console** logs the island's lifecycle (lines starting with
+            "Island:"): submitted, started, expired by iOS, completed, ended for a
+            lock.
 
           The attached IPA is **unsigned** and is intended for downstream signing/sideloading workflows.
           EOF

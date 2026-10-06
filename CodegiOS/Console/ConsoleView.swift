@@ -13,6 +13,7 @@ struct ConsoleView: View {
     @State private var diagnostics: [(String, String)] = []
     @State private var netQuery = ""
     @State private var netScope: NetScope = .all
+    @AppStorage(BackgroundAgentCoordinator.liveIslandTextKey) private var islandLiveText = true
 
     enum NetScope: String, CaseIterable {
         case all = "All", page = "Page", app = "App", failed = "Failed", sockets = "WS"
@@ -208,6 +209,11 @@ struct ConsoleView: View {
 
     private var diagnosticsView: some View {
         List {
+            Section {
+                Toggle("Live island text in background", isOn: $islandLiveText)
+            } footer: {
+                Text("On: the Dynamic Island shows the running time and the current step, refreshed in the background at most once a minute. Off: in the background its text changes only when you need to act, and shows the start time instead — try this if the island keeps opening up on its own.")
+            }
             Section {
                 ForEach(diagnostics, id: \.0) { key, value in
                     LabeledContent(key) {

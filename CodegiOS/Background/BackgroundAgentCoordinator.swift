@@ -57,6 +57,19 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private static let continuedIdentifierPrefix = "app.codeg.ios.web.continued.agent"
     private static let retryTTL: TimeInterval = 60
     private static let systemUpdateDebounce: TimeInterval = 3
+    /// In the background the island's text is refreshed at most this often —
+    /// the running time moves by the minute anyway.
+    private static let backgroundUpdateInterval: TimeInterval = 60
+
+    /// Console → Diagnostics switch. On (the default), the island shows the
+    /// running time and the current step and keeps them current in the
+    /// background. Off, its text changes in the background only when the person
+    /// has to act, and shows the start time instead — for a phone where every
+    /// text update opens the island up.
+    static let liveIslandTextKey = "islandLiveText"
+    private var liveIslandText: Bool {
+        UserDefaults.standard.object(forKey: Self.liveIslandTextKey) as? Bool ?? true
+    }
 
     private override init() {
         super.init()
@@ -117,12 +130,12 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         backgroundedAt = Date()
         let hasTask = continuedTaskIdentifier != nil
         lock.unlock()
-        // Deliberately no title update here. An update to the continued-processing
-        // Live Activity expands the Dynamic Island, and this one landed exactly as
-        // the island first appeared — it opened up on every switch away from the
-        // app and stayed open until tapped. The text was kept current while in
-        // the foreground (where the island isn't shown), so there is nothing to
-        // refresh.
+        // Deliberately no title update here. This is the moment the island first
+        // appears, and an update landing right then coincided with it opening up
+        // on every switch away from the app and staying open until tapped. The
+        // text was kept current in the foreground (where the island isn't
+        // shown), so there is nothing to refresh; the background refresh below
+        // picks up from here.
         if hasTask { AppConsole.log("Island: app in background, island left as is", level: .debug) }
     }
 
@@ -342,7 +355,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         // time — fast enough to read as "alive and moving" rather than as a
         // percentage — advanced by the heartbeat below; it wraps and starts
         // the next lap.
-        // The start time stays in the subtitle ("Working · since 14:05").
+        // The exact figure stays in the subtitle ("4 min · Editing …").
         task.progress.totalUnitCount = Self.progressLapSeconds
         task.progress.completedUnitCount = 0
         // A new task starts from the request's text; what the previous task last
@@ -388,8 +401,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
         // The progress tick is what keeps the system from expiring the task. It
-        // never changes the island's text (see `updateSystemTaskTitle`), so the
-        // tick itself never expands the Dynamic Island.
+        // also offers the text a refresh, which `updateSystemTaskTitle` lets
+        // through only when it changed and its interval has passed.
         let startedAt = Date()
         timer.schedule(deadline: .now() + Self.progressHeartbeat, repeating: Self.progressHeartbeat)
         timer.setEventHandler { [weak self, weak task] in
@@ -409,14 +422,14 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         timer.resume()
     }
 
-    /// A text update expands the Dynamic Island, and this system Live Activity
-    /// was seen not to collapse again on its own (on device: it opened on every
-    /// switch away from the app and stayed open until tapped). So while the app
-    /// is in the background the text changes only when the person has to act —
-    /// a permission, a question, a plan — or no longer has to (`force`). In the
-    /// foreground the island isn't shown and updates are free; the text is
-    /// written there to be time-independent ("Working · since 14:05"), so it
-    /// never needs a refresh once the app is left.
+    /// The island's text is what a person sees when they long-press it (and on
+    /// the lock screen), so it has to stay current in the background too. It is
+    /// refreshed there at most once a minute, never in the first minute after
+    /// the switch away, and at once when the person has to act (a permission, a
+    /// question, a plan) or no longer has to (`force`). In the foreground the
+    /// island isn't shown and only the short debounce applies. With the Console
+    /// switch off (`liveIslandText`), the background text changes only for
+    /// `force`.
     private func updateSystemTaskTitle(force: Bool = false) {
         let now = Date()
         lock.lock()
@@ -424,11 +437,14 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         let aggregate = aggregateTitleLocked(now: now)
         let duplicate = aggregate.title == lastRenderedTitle && aggregate.subtitle == lastRenderedSubtitle
         let inBackground = backgroundedAt != nil
-        let tooSoon = lastSystemTaskUpdateAt.map {
-            now.timeIntervalSince($0) < Self.systemUpdateDebounce
-        } ?? false
+        let minimumGap = inBackground ? Self.backgroundUpdateInterval : Self.systemUpdateDebounce
+        // In the background the gap also counts from the switch away, so the
+        // first refresh never lands as the island is appearing.
+        let lastChange = [lastSystemTaskUpdateAt, backgroundedAt].compactMap { $0 }.max()
+        let gapElapsed = lastChange.map { now.timeIntervalSince($0) >= minimumGap } ?? true
+        let quietBackground = inBackground && !liveIslandText
 
-        if duplicate || (!force && (inBackground || tooSoon)) {
+        if duplicate || (!force && (quietBackground || !gapElapsed)) {
             lock.unlock()
             return
         }
@@ -459,11 +475,15 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             // depends on EventStream/view callback ordering.
             let startedAt = BackgroundAgentNavigationStore.shared.singleActiveStartedAt(now: now)
                 ?? only.startedAt
-            // A start time instead of "N min": elapsed time goes stale the moment
-            // updates stop (and in the background they do, see
-            // `updateSystemTaskTitle`); the progress ring is the running clock.
-            // Only the waits are named — a step like "Editing x.swift" would be
-            // frozen on the island long after the agent moved on.
+            if liveIslandText {
+                // Time first: the expanded view and the lock screen truncate a
+                // long phase ("Editing SomeLongFileName.swift"), and the figure
+                // is the thing a glance is after.
+                return (only.title, "\(Self.elapsedText(from: startedAt, now: now)) · \(only.phase)")
+            }
+            // Quiet mode: the text barely changes in the background, so it must
+            // not go stale — a start time instead of "N min", and only the waits
+            // named (a step like "Editing x.swift" would stay frozen there).
             let phase = Self.isAttentionPhase(only.phase) ? only.phase : "Working"
             return (only.title, "\(phase) · since \(startedAt.formatted(date: .omitted, time: .shortened))")
         }
@@ -491,6 +511,14 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private static func isAttentionPhase(_ phase: String) -> Bool {
         let lower = phase.lowercased()
         return lower.contains("permission") || lower.contains("question") || lower.contains("plan")
+    }
+
+    private static func elapsedText(from startedAt: Date, now: Date) -> String {
+        let seconds = max(0, now.timeIntervalSince(startedAt))
+        guard seconds >= 60 else { return "<1 min" }
+        let minutes = max(1, Int(seconds / 60))
+        guard minutes >= 60 else { return "\(minutes) min" }
+        return "\(minutes / 60) h \(minutes % 60) min"
     }
 
     // MARK: - Network path recovery

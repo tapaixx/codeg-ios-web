@@ -24,12 +24,13 @@ the text as the git tag message and the GitHub Release notes.
   (several running sessions attaching as the app opens) could each submit a
   background task.
 - **Dynamic Island: expanded on every switch away from the app and stayed
-  open.** The app updated the island's text the moment it went to the
-  background, then every minute (elapsed time) and on every agent step. In the
-  background the text now changes only when you need to act — a permission, a
-  question, a plan. The subtitle shows the start time ("Working · since 14:05")
-  instead of minutes elapsed, so it never goes stale; the ring is still the
-  running clock.
+  open.** The app updated the island's text at the very moment it went to the
+  background — exactly when the island first appears. It no longer does; the
+  text is current from the foreground, and in the background it is refreshed at
+  most once a minute (running time and current step; not in the first minute
+  after you switch away), and at once when you need to act. If the island still keeps opening up on its own, Console →
+  Diagnostics → *Live island text in background* turns the background refresh
+  off (the subtitle then shows the start time instead).
 
 ### Added
 

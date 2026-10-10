@@ -6,8 +6,10 @@ import WebKit
 /// shell's background pieces do — kept on the device so a problem can be
 /// looked at without a Mac and Safari's Web Inspector.
 ///
-/// A ring buffer of the most recent entries, in memory only; nothing is
-/// written to disk or sent anywhere.
+/// A ring buffer of the most recent entries, in memory. The island's own lines
+/// (`Island: …`) also go to a small file on the device (``IslandLog``), so what
+/// happened while the app was away — or before iOS ended it — survives a
+/// relaunch. Nothing is sent anywhere.
 @MainActor
 @Observable
 final class AppConsole {
@@ -72,6 +74,20 @@ final class AppConsole {
     /// The main page's web view, for diagnostics and the JS runner.
     weak var webView: WKWebView?
 
+    private init() {
+        // Island lines from earlier launches, so a failure that happened while
+        // the app was away can still be read.
+        let earlier = IslandLog.load(limit: 300)
+        guard !earlier.isEmpty else { return }
+        entries = earlier.map {
+            Entry(date: $0.date, level: $0.level, source: .app, message: $0.message)
+        }
+        entries.append(Entry(
+            date: Date(), level: .debug, source: .app,
+            message: "Island: ── lines above are from earlier launches ──"
+        ))
+    }
+
     func append(_ message: String, level: Level = .log, source: Source = .app) {
         let text = message.count > Self.maxMessageLength
             ? String(message.prefix(Self.maxMessageLength)) + "…"
@@ -82,7 +98,10 @@ final class AppConsole {
         }
     }
 
-    func clear() { entries.removeAll() }
+    func clear() {
+        entries.removeAll()
+        IslandLog.clear()
+    }
     func clearRequests() { requests.removeAll() }
 
     func upsertRequest(id: String, _ update: (inout Request) -> Void, create: () -> Request) {
@@ -172,6 +191,9 @@ final class AppConsole {
 
     /// Log from any thread.
     nonisolated static func log(_ message: String, level: Level = .log) {
+        if message.hasPrefix("Island:") {
+            IslandLog.append(date: Date(), level: level, message: message)
+        }
         Task { @MainActor in shared.append(message, level: level, source: .app) }
     }
 
@@ -385,4 +407,69 @@ final class AppConsole {
         injectionTime: .atDocumentStart,
         forMainFrameOnly: true
     )
+}
+
+/// The island's lines on disk: one file in Application Support, appended on a
+/// serial queue, trimmed to its newer half past a size cap. On this device
+/// only; read back into the console at launch (``AppConsole``).
+enum IslandLog {
+    private static let queue = DispatchQueue(label: "app.codeg.console.island-log")
+    private static let maxBytes = 256 * 1024
+
+    private static var url: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("island.log")
+    }
+
+    static func append(date: Date, level: AppConsole.Level, message: String) {
+        let flat = message.replacingOccurrences(of: "\n", with: " ")
+        let line = "\(date.timeIntervalSince1970)\t\(level.rawValue)\t\(flat)\n"
+        queue.async {
+            guard let url = Self.url, let data = line.data(using: .utf8) else { return }
+            let files = FileManager.default
+            if !files.fileExists(atPath: url.path) {
+                try? files.createDirectory(
+                    at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+                )
+                try? data.write(to: url)
+                return
+            }
+            guard let handle = try? FileHandle(forWritingTo: url) else { return }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+            let size = (try? handle.offset()) ?? 0
+            try? handle.close()
+            if size > UInt64(maxBytes) { trim(url) }
+        }
+    }
+
+    /// Keeps the newer half, starting at a line boundary.
+    private static func trim(_ url: URL) {
+        guard let data = try? Data(contentsOf: url) else { return }
+        let tail = data.suffix(maxBytes / 2)
+        guard let newline = tail.firstIndex(of: 0x0A) else { return }
+        try? Data(tail[tail.index(after: newline)...]).write(to: url, options: .atomic)
+    }
+
+    /// The most recent lines, oldest first.
+    static func load(limit: Int) -> [(date: Date, level: AppConsole.Level, message: String)] {
+        guard let url = Self.url, let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+        return text.split(separator: "\n").suffix(limit).compactMap {
+            line -> (date: Date, level: AppConsole.Level, message: String)? in
+            let parts = line.split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false)
+            guard parts.count == 3,
+                  let seconds = Double(parts[0]),
+                  let level = AppConsole.Level(rawValue: String(parts[1]))
+            else { return nil }
+            return (Date(timeIntervalSince1970: seconds), level, String(parts[2]))
+        }
+    }
+
+    static func clear() {
+        queue.async {
+            guard let url = Self.url else { return }
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
 }

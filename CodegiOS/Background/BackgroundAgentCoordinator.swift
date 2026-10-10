@@ -47,6 +47,9 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private var continuedTask: BGContinuedProcessingTask?
     private var continuedTaskIdentifier: String?
     private var continuedProgressTimer: DispatchSourceTimer?
+    /// When the progress heartbeat last moved the ring. If iOS expires the task,
+    /// how long ago this was tells a stall (the device slept) from a reclaim.
+    private var lastProgressAt: Date?
     private var backgroundedAt: Date?
     private var lastSystemTaskUpdateAt: Date?
     private var lastRenderedTitle: String?
@@ -111,12 +114,27 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+        // Fallback for the lock signals below: posted ~10 s after the lock,
+        // which is late once the device has gone to sleep (see deviceWillLock).
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(deviceWillLock),
             name: UIApplication.protectedDataWillBecomeUnavailableNotification,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(thermalStateChanged),
+            name: ProcessInfo.thermalStateDidChangeNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didReceiveMemoryWarning),
+            name: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil
+        )
+        observeLockSignals()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(deviceDidUnlock),
@@ -141,8 +159,12 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     @objc private func applicationWillEnterForeground() {
         lock.lock()
+        let since = backgroundedAt
         backgroundedAt = nil
         lock.unlock()
+        if let since {
+            AppConsole.log("Island: back in the foreground after \(Int(Date().timeIntervalSince(since)))s", level: .debug)
+        }
     }
 
     /// A task can be submitted only from the foreground. Turns still running
@@ -157,9 +179,78 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     /// stops, progress goes stale, and ~30 s later the system expires the task —
     /// which always shows "Task failed", whatever the app reports, and that entry
     /// can't be cleared; the next turn opens another one beside it. Ending the
-    /// task here, before the data-protection lock, completes it cleanly instead.
-    /// The agent itself keeps running on the server either way.
+    /// task as the phone locks completes it cleanly instead. The agent itself
+    /// keeps running on the server either way.
+    ///
+    /// This one is the documented signal, but it arrives ~10 s after the lock —
+    /// by then the device may already be asleep, and the task expired before the
+    /// app runs again (it still did in 0.0.10). So it is only the fallback; the
+    /// immediate signals are in `observeLockSignals`.
     @objc private func deviceWillLock() {
+        endContinuedTaskCleanly("device locking")
+    }
+
+    /// SpringBoard posts these Darwin notifications the moment the phone locks
+    /// or its screen goes dark — before the device can sleep. They are not
+    /// documented API, which App Review may object to; this build is installed
+    /// directly. If a future iOS stops posting them, the fallback above remains.
+    private static let lockSignals = [
+        "com.apple.springboard.lockcomplete",
+        "com.apple.springboard.hasBlankedScreen",
+    ]
+
+    private func observeLockSignals() {
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        let observer = Unmanaged.passUnretained(self).toOpaque()
+        for name in Self.lockSignals {
+            CFNotificationCenterAddObserver(
+                center,
+                observer,
+                { _, observer, name, _, _ in
+                    guard let observer else { return }
+                    let coordinator = Unmanaged<BackgroundAgentCoordinator>
+                        .fromOpaque(observer)
+                        .takeUnretainedValue()
+                    let signal = name.map { $0.rawValue as String } ?? "lock"
+                    coordinator.screenLocked(signal: signal)
+                },
+                name as CFString,
+                nil,
+                .deliverImmediately
+            )
+        }
+    }
+
+    private func screenLocked(signal: String) {
+        let short = signal.split(separator: ".").last.map(String.init) ?? signal
+        // Logged even with no task running: shows whether this iOS still posts it.
+        AppConsole.log("Island: lock signal \(short)", level: .debug)
+        endContinuedTaskCleanly("screen locked (\(short))")
+    }
+
+    /// A hot phone is one of the reasons iOS reclaims background work; end the
+    /// island ourselves before it does (that expiry would show as failed).
+    @objc private func thermalStateChanged() {
+        let state = ProcessInfo.processInfo.thermalState
+        guard state == .serious || state == .critical else { return }
+        endContinuedTaskCleanly("phone is \(Self.describe(state))")
+    }
+
+    /// In the background a memory warning comes before iOS reclaims the app's
+    /// work — same reasoning as the thermal case.
+    @objc private func didReceiveMemoryWarning() {
+        lock.lock()
+        let inBackground = backgroundedAt != nil
+        lock.unlock()
+        guard inBackground else { return }
+        endContinuedTaskCleanly("memory is low")
+    }
+
+    /// Ends the island ourselves — `setTaskCompleted(success: true)`, which iOS
+    /// shows as done rather than failed — ahead of an expiry we can see coming.
+    /// The turns themselves are untouched; the island comes back when the app is
+    /// opened while the agent is still working (`applicationDidBecomeActive`).
+    private func endContinuedTaskCleanly(_ reason: String) {
         lock.lock()
         let task = continuedTask
         let identifier = continuedTaskIdentifier
@@ -175,7 +266,17 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
         }
         task?.setTaskCompleted(success: true)
-        AppConsole.log("Island: device locking, ended it cleanly (\(running) turn(s) still running; it comes back when the app is opened)", level: .info)
+        AppConsole.log("Island: \(reason), ended it cleanly (\(running) turn(s) still running; it comes back when the app is opened)", level: .info)
+    }
+
+    private static func describe(_ state: ProcessInfo.ThermalState) -> String {
+        switch state {
+        case .nominal: return "nominal"
+        case .fair: return "fair"
+        case .serious: return "hot"
+        case .critical: return "critical"
+        @unknown default: return "unknown"
+        }
     }
 
     @objc private func deviceDidUnlock() {
@@ -290,6 +391,11 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     /// islands, one of them abandoned.
     private func ensureContinuedTask() {
         guard UIApplication.shared.applicationState == .active else { return }
+        let thermal = ProcessInfo.processInfo.thermalState
+        guard thermal != .serious, thermal != .critical else {
+            AppConsole.log("Island: not started, phone is \(Self.describe(thermal))", level: .info)
+            return
+        }
 
         let identifier = "\(Self.continuedIdentifierPrefix).\(UUID().uuidString)"
         lock.lock()
@@ -363,6 +469,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         lastRenderedTitle = nil
         lastRenderedSubtitle = nil
         lastSystemTaskUpdateAt = nil
+        lastProgressAt = Date()
         lock.unlock()
 
         // iOS invokes this both for system resource expiration and for a person
@@ -373,7 +480,10 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
         // the operation that calls acp_cancel.
         task.expirationHandler = { [weak self, weak task] in
             guard let self else { return }
+            let now = Date()
             self.lock.lock()
+            let backgroundedAt = self.backgroundedAt
+            let lastProgressAt = self.lastProgressAt
             if self.continuedTaskIdentifier == identifier {
                 self.continuedTask = nil
                 self.continuedTaskIdentifier = nil
@@ -383,8 +493,20 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
             self.lock.unlock()
             task?.setTaskCompleted(success: true)
             // iOS has already marked it failed by now (Apple DTS: the failure is
-            // posted before this handler runs and can't be changed).
-            AppConsole.log("Island: iOS expired the task (shown as failed)", level: .warn)
+            // posted before this handler runs and can't be changed). Record the
+            // circumstances so the console says which case this was: a progress
+            // gap near 30 s means the device slept; a short one, a reclaim.
+            let info = ProcessInfo.processInfo
+            let background = backgroundedAt.map { "in background \(Int(now.timeIntervalSince($0)))s" } ?? "in foreground"
+            let progress = lastProgressAt.map { "last progress \(Int(now.timeIntervalSince($0)))s ago" } ?? "no progress yet"
+            AppConsole.log(
+                "Island: iOS expired the task (shown as failed) · \(background) · \(progress) · thermal \(Self.describe(info.thermalState)) · low power \(info.isLowPowerModeEnabled ? "on" : "off")",
+                level: .warn
+            )
+            DispatchQueue.main.async {
+                let locked = !UIApplication.shared.isProtectedDataAvailable
+                AppConsole.log("Island: at that expiry the phone was \(locked ? "locked" : "unlocked")", level: .warn)
+            }
         }
 
         startProgressHeartbeat(for: task, identifier: identifier)
@@ -399,16 +521,23 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
     private static let progressHeartbeat: TimeInterval = 5
 
     private func startProgressHeartbeat(for task: BGContinuedProcessingTask, identifier: String) {
-        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+        // User-initiated, not utility: in the background a utility timer can be
+        // deferred, and a heartbeat that slips past ~30 s gets the task expired.
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInitiated))
         // The progress tick is what keeps the system from expiring the task. It
         // also offers the text a refresh, which `updateSystemTaskTitle` lets
         // through only when it changed and its interval has passed.
         let startedAt = Date()
-        timer.schedule(deadline: .now() + Self.progressHeartbeat, repeating: Self.progressHeartbeat)
+        timer.schedule(
+            deadline: .now() + Self.progressHeartbeat,
+            repeating: Self.progressHeartbeat,
+            leeway: .milliseconds(500)
+        )
         timer.setEventHandler { [weak self, weak task] in
             guard let self, let task else { return }
             self.lock.lock()
             let valid = self.continuedTaskIdentifier == identifier && !self.activeTurns.isEmpty
+            if valid { self.lastProgressAt = Date() }
             self.lock.unlock()
             guard valid else { return }
             let elapsed = Int64(Date().timeIntervalSince(startedAt))
@@ -681,7 +810,7 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     func notifyTurnCompleted(connectionID: String? = nil) {
         scheduleNotification(
-            identifier: "turn-complete:\(UUID().uuidString)",
+            identifier: "turn-complete:\(conversationKey(connectionID) ?? UUID().uuidString)",
             title: "Codeg task completed",
             body: "The agent finished its reply.",
             categoryID: "",
@@ -691,12 +820,21 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
 
     func notifyTurnFailed(_ message: String, connectionID: String? = nil) {
         scheduleNotification(
-            identifier: "turn-failed:\(UUID().uuidString)",
+            identifier: "turn-failed:\(conversationKey(connectionID) ?? UUID().uuidString)",
             title: "Codeg task needs attention",
             body: message,
             categoryID: "",
             connectionID: connectionID
         )
+    }
+
+    /// One completion / failure notice per conversation: a newer one replaces
+    /// the older instead of stacking beside it (same identifier = replaced).
+    private func conversationKey(_ connectionID: String?) -> String? {
+        guard let connectionID else { return nil }
+        lock.lock(); defer { lock.unlock() }
+        guard let route = routes[connectionID] else { return nil }
+        return "\(route.serverID.uuidString):\(route.conversationID)"
     }
 
     private func scheduleQuestionStep(key: String) {
@@ -782,6 +920,8 @@ final class BackgroundAgentCoordinator: NSObject, @unchecked Sendable {
                     "serverID": route.serverID.uuidString,
                     "conversationID": route.conversationID,
                 ]
+                // Grouped per conversation in Notification Center.
+                content.threadIdentifier = "conversation:\(route.serverID.uuidString):\(route.conversationID)"
             }
         }
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)

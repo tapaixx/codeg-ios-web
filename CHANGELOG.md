@@ -8,6 +8,32 @@ Add changes under `## [Unreleased]` as you work. When you cut a release,
 `scripts/release.sh` moves that section under a new version heading and reuses
 the text as the git tag message and the GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+
+- **Dynamic Island: still "Task failed" after locking.** 0.0.10 ended the
+  island on the documented lock signal, which arrives ~10 s after the lock —
+  by then the device may already be asleep (the iOS bug), so the task still
+  expired. The island now ends the moment the phone locks or its screen goes
+  dark (SpringBoard's lock signals; not documented API — fine for a directly
+  installed build), with the old signal kept as a fallback. It also ends
+  itself, cleanly, when the phone gets hot or memory runs low in the
+  background — the other reasons iOS reclaims background work — and the
+  progress heartbeat runs at a higher priority so it isn't deferred.
+- **Notifications piling up.** A conversation's "completed" and "needs
+  attention" notices now replace the previous one instead of stacking, and are
+  grouped per conversation.
+
+### Added
+
+- **Island diagnostics that survive a relaunch.** The island's console lines
+  are also kept in a small file on the device and shown again at launch. When
+  iOS does expire the task, the line says how long the app had been in the
+  background, how long since progress last moved, the thermal state, Low Power
+  Mode, and whether the phone was locked — which tells a sleeping device from
+  a reclaim.
+
 ## [0.0.10] — 2026-10-05
 
 ### Fixed
